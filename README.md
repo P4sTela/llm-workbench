@@ -57,9 +57,12 @@ and `NINFER_PORT` when needed. The Compose command reads every launch value from
 `configs/ninfer-v2-qwen38-4090-262k-e8-mtp3.env` explicitly.
 
 The repository's notes record the earlier real RTX 4090 run. In this checkout I verified
-the source/build contract and static recipe shape only; I did not run the Docker build,
-GPU runtime, model download, or API smoke test here. Those remain to be exercised on the
-Linux GPU host before treating this recipe as a newly verified deployment.
+the source/build contract and static recipe shape. Docker Buildx using the `orbstack`
+builder successfully built the Dockerfile for `linux/amd64`, and the resulting image was
+loaded as `llm-workbench-ninfer-v2:sm89`. In that image, `ninfer-serve --help` and
+`ninfer --help` also ran successfully without a GPU, with the expected NVIDIA
+driver-not-detected warning. GPU runtime on an NVIDIA host, model download, and the smoke
+script against a real NInfer server remain untested here.
 
 ## License
 

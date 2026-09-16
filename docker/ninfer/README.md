@@ -11,5 +11,9 @@ by default. Weights are never copied into the image. See the root README for the
 workflow, [`download-qwen38-27b.sh`](../../scripts/download-qwen38-27b.sh), and
 [`smoke-ninfer.sh`](../../scripts/smoke-ninfer.sh).
 
-The source contract and static recipe were checked here. The Docker build, model download,
-GPU runtime, and API smoke test were not run in this environment.
+The source contract and static recipe were checked here. Docker Buildx using the `orbstack`
+builder successfully built the Dockerfile for `linux/amd64`, and the resulting image was
+loaded as `llm-workbench-ninfer-v2:sm89`. In that image, `ninfer-serve --help` and
+`ninfer --help` also ran successfully without a GPU, with the expected NVIDIA
+driver-not-detected warning. GPU runtime on an NVIDIA host, model download, and the smoke
+script against a real NInfer server remain untested here.
