@@ -1,0 +1,9 @@
+.git
+.pi
+.env
+.env.*
+!.env.example
+models
+**/*.ninfer
+**/*.gguf
+**/*.safetensors

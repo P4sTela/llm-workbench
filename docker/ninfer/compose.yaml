@@ -1,0 +1,39 @@
+services:
+  ninfer:
+    build:
+      context: ../..
+      dockerfile: docker/ninfer/Dockerfile
+    image: ${NINFER_IMAGE:-ninfer-4090:sm89}
+    env_file:
+      - ../../configs/ninfer-v2-qwen38-4090-262k-e8-mtp3.env
+    environment:
+      NINFER_SERVER_HOST: 0.0.0.0
+      NINFER_SERVER_PORT: 8080
+    gpus: all
+    ports:
+      - "${NINFER_BIND_ADDRESS:-127.0.0.1}:${NINFER_PORT:-8080}:8080"
+    volumes:
+      - "${MODEL_DIR:-../../models}:/workspace/models:ro"
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        set -- ninfer-serve "/workspace/models/$${MODEL_FILE}" \
+          --host "$${NINFER_SERVER_HOST}" \
+          --port "$${NINFER_SERVER_PORT}" \
+          --max-context "$${MAX_CONTEXT}" \
+          --kv-capacity "$${KV_CAPACITY}" \
+          --max-concurrency "$${MAX_CONCURRENCY}" \
+          --max-pending-requests "$${MAX_PENDING_REQUESTS}" \
+          --pending-timeout-ms "$${PENDING_TIMEOUT_MS}" \
+          --prefill-chunk "$${PREFILL_CHUNK}" \
+          --kv-dtype "$${KV_DTYPE}" \
+          --spec "$${SPEC}" \
+          --draft-tokens "$${DRAFT_TOKENS}"
+        if [ "$${LM_HEAD_DRAFT}" = true ]; then
+          set -- "$@" --lm-head-draft
+        fi
+        if [ "$${PRESERVE_THINKING}" = true ]; then
+          set -- "$@" --preserve-thinking
+        fi
+        exec "$@"

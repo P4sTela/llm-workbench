@@ -27,9 +27,39 @@ This is a public collection of Docker configurations, machine-specific settings,
 - Mark results as tested, experimental, or failed instead of presenting guesses as benchmarks.
 - Do not commit API keys, personal prompts, session logs, or private tool definitions.
 
-## Status
+## First recipe: NInfer V2 / Qwen3.8-27B / RTX 4090
 
-The repository is being built incrementally. The first recipe is planned around the tested NInfer V2 / Qwen3.8-27B / RTX 4090 configuration; new recipes will be added after they have been exercised on real hardware.
+This is the first reproducible recipe, kept deliberately small. It builds the public
+`sergiuszm/ninfer-4090` source at commit
+`1bd56c9a1bdf457c6188391a9385d44d86e953aa`, which pins the `sm_89` CUDA target. The
+model stays on the host and is mounted read-only; it is not part of the image.
+
+### Clean-checkout workflow
+
+On a Linux host with an RTX 4090, a recent NVIDIA driver, Docker, and the NVIDIA
+Container Toolkit:
+
+```bash
+export MODEL_DIR=/path/to/ninfer-models
+NINFER_MODEL_DIR="$MODEL_DIR" bash scripts/download-qwen38-27b.sh
+docker compose -f docker/ninfer/compose.yaml build
+MODEL_DIR="$MODEL_DIR" docker compose -f docker/ninfer/compose.yaml up
+```
+
+In another terminal, run the small local API check:
+
+```bash
+bash scripts/smoke-ninfer.sh
+```
+
+The published port defaults to `127.0.0.1:8080`; override it with `NINFER_BIND_ADDRESS`
+and `NINFER_PORT` when needed. The Compose command reads every launch value from
+`configs/ninfer-v2-qwen38-4090-262k-e8-mtp3.env` explicitly.
+
+The repository's notes record the earlier real RTX 4090 run. In this checkout I verified
+the source/build contract and static recipe shape only; I did not run the Docker build,
+GPU runtime, model download, or API smoke test here. Those remain to be exercised on the
+Linux GPU host before treating this recipe as a newly verified deployment.
 
 ## License
 

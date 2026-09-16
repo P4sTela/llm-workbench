@@ -13,3 +13,6 @@ results/
 .DS_Store
 __pycache__/
 *.py[cod]
+
+# Local Git worktrees under the repository root
+.worktrees/
