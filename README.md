@@ -70,6 +70,28 @@ loaded as `llm-workbench-ninfer-v2:sm89`. In that image, `ninfer-serve --help` a
 driver-not-detected warning. GPU runtime on an NVIDIA host, model download, and the smoke
 script against a real NInfer server remain untested here.
 
+## DFlash2 experiment: Qwen3.8-27B / RTX 4090
+
+`notes/qwen38-dflash2.md` documents the experimental DFlash2 path. It pins the
+`z-lab/Qwen3.8-27B-DFlash2` drafter, downloads it into an isolated directory,
+and grafts its W8/BF16 objects onto the existing V2 target artifact. The runtime
+profile uses `SPEC=dflash2` and seven draft tokens; it does not enable the MTP
+`--lm-head-draft` flag. The recipe and artifact conversion are statically
+checked here, but the full graft requires the target artifact and a GPU run is
+not yet verified in this checkout.
+
+Select the profile explicitly when launching Compose. The DFlash2 engine
+source lives in the P4sTela fork, so also override the build args (see
+`notes/qwen38-dflash2.md` for the exact commit):
+
+```bash
+NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
+NINFER_COMMIT=612d7aef6dd4349939a344cc80b16c2aa58a0696 \
+NINFER_IMAGE=ninfer-4090:dflash2 \
+NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
+  docker compose -f docker/ninfer/compose.yaml up --build
+```
+
 ## License
 
 No repository license has been selected yet. Until a license is added, the contents should not be assumed to be available for reuse. Model and dependency licenses remain the responsibility of their respective upstream projects.
