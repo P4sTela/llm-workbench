@@ -22,6 +22,9 @@ services:
           --host "$${NINFER_SERVER_HOST}" \
           --port "$${NINFER_SERVER_PORT}" \
           --max-context "$${MAX_CONTEXT}" \
+          --default-max-tokens "$${DEFAULT_MAX_TOKENS}" \
+          --host-kv-mib "$${HOST_KV_MIB}" \
+          --host-state-slots "$${HOST_STATE_SLOTS}" \
           --kv-capacity "$${KV_CAPACITY}" \
           --max-concurrency "$${MAX_CONCURRENCY}" \
           --max-pending-requests "$${MAX_PENDING_REQUESTS}" \

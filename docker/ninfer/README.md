@@ -21,6 +21,10 @@ The downloader falls back to `NINFER_MODEL_DIR` when `MODEL_DIR` is unset, then 
 `models/`. [`download-qwen38-27b.sh`](../../scripts/download-qwen38-27b.sh) remains as a
 compatibility wrapper. Each exact quantization or artifact gets its own manifest.
 
+The env profile keeps the earlier tested launch baseline unchanged. `DEFAULT_MAX_TOKENS=16384`
+and the host-cache reservations `HOST_KV_MIB=32768` and `HOST_STATE_SLOTS=16` are
+experimental; any benefit requires a redeploy and inspection of runtime logs.
+
 The source contract and static recipe were checked here. Docker Buildx using the `orbstack`
 builder successfully built the Dockerfile for `linux/amd64`, and the resulting image was
 loaded as `llm-workbench-ninfer-v2:sm89`. In that image, `ninfer-serve --help` and
