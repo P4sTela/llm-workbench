@@ -43,7 +43,9 @@ def safe_relative_parts(value: str, field: str) -> list[str]:
 
     parts = value.split("/")
     if not parts or any(not part or part in {".", ".."} for part in parts):
-        raise ManifestError(f"{field} must not contain empty, '.', or '..' path components")
+        raise ManifestError(
+            f"{field} must not contain empty, '.', or '..' path components"
+        )
     return parts
 
 
@@ -79,16 +81,28 @@ def validate_manifest(data: Any) -> tuple[str, str, list[dict[str, Any]]]:
         seen.add(file_name)
 
         byte_count = item.get("bytes")
-        if isinstance(byte_count, bool) or not isinstance(byte_count, int) or byte_count < 0:
+        if (
+            isinstance(byte_count, bool)
+            or not isinstance(byte_count, int)
+            or byte_count < 0
+        ):
             raise ManifestError(f"{field_prefix}.bytes must be a non-negative integer")
 
         sha256 = non_empty_string(item.get("sha256"), f"{field_prefix}.sha256")
         if not SHA256_RE.fullmatch(sha256):
-            raise ManifestError(f"{field_prefix}.sha256 must be a 64-character hexadecimal digest")
+            raise ManifestError(
+                f"{field_prefix}.sha256 must be a 64-character hexadecimal digest"
+            )
 
-        validated_files.append({"file": file_name, "bytes": byte_count, "sha256": sha256.lower()})
+        validated_files.append(
+            {"file": file_name, "bytes": byte_count, "sha256": sha256.lower()}
+        )
 
-    return name, f"https://huggingface.co/{quote(repo, safe='/')}/resolve/{quote(revision, safe='/')}", validated_files
+    return (
+        name,
+        f"https://huggingface.co/{quote(repo, safe='/')}/resolve/{quote(revision, safe='/')}",
+        validated_files,
+    )
 
 
 def load_manifest(path: Path) -> tuple[str, str, list[dict[str, Any]]]:
@@ -99,7 +113,9 @@ def load_manifest(path: Path) -> tuple[str, str, list[dict[str, Any]]]:
     except OSError as exc:
         raise ManifestError(f"cannot read manifest {path}: {exc}") from exc
     except json.JSONDecodeError as exc:
-        raise ManifestError(f"invalid JSON in {path}: {exc.msg} at line {exc.lineno}") from exc
+        raise ManifestError(
+            f"invalid JSON in {path}: {exc.msg} at line {exc.lineno}"
+        ) from exc
     return validate_manifest(data)
 
 
@@ -140,7 +156,9 @@ def verify_or_raise(path: Path, spec: dict[str, Any], description: str) -> None:
         )
 
 
-def handle_existing_target(part_path: Path, final_path: Path, spec: dict[str, Any]) -> None:
+def handle_existing_target(
+    part_path: Path, final_path: Path, spec: dict[str, Any]
+) -> None:
     if ensure_regular_or_missing(final_path, "existing model file") and is_verified(
         final_path, spec["bytes"], spec["sha256"]
     ):
@@ -158,12 +176,16 @@ def promote_verified(part_path: Path, final_path: Path, spec: dict[str, Any]) ->
         if exc.errno == errno.EEXIST:
             handle_existing_target(part_path, final_path, spec)
             return
-        raise DownloadError(f"cannot install verified file {final_path}: {exc}") from exc
+        raise DownloadError(
+            f"cannot install verified file {final_path}: {exc}"
+        ) from exc
 
     try:
         part_path.unlink()
     except OSError as exc:
-        raise DownloadError(f"verified file installed but cannot remove {part_path}: {exc}") from exc
+        raise DownloadError(
+            f"verified file installed but cannot remove {part_path}: {exc}"
+        ) from exc
 
 
 def safe_output_path(output_dir: Path, path_parts: list[str]) -> Path:
@@ -232,7 +254,9 @@ def download_file(base_url: str, output_dir: Path, spec: dict[str, Any]) -> None
         url,
     ]
     try:
-        result = subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(
+            command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True
+        )
     except FileNotFoundError as exc:
         raise DownloadError("curl is required but was not found on PATH") from exc
     except OSError as exc:
@@ -252,7 +276,9 @@ def download_file(base_url: str, output_dir: Path, spec: dict[str, Any]) -> None
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Download and verify a Hugging Face model manifest")
+    parser = argparse.ArgumentParser(
+        description="Download and verify a Hugging Face model manifest"
+    )
     parser.add_argument("manifest", type=Path, help="path to the model manifest JSON")
     return parser.parse_args(argv)
 

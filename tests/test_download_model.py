@@ -34,9 +34,15 @@ class DownloadModelTests(unittest.TestCase):
             output.write_bytes(b"hello")
             return type("Result", (), {"returncode": 0})()
 
-        with patch.object(DOWNLOAD_MODEL.subprocess, "run", side_effect=fake_curl) as run:
-            DOWNLOAD_MODEL.download_file("https://example.test/resolve/rev", self.output_dir, self.file_spec)
-            DOWNLOAD_MODEL.download_file("https://example.test/resolve/rev", self.output_dir, self.file_spec)
+        with patch.object(
+            DOWNLOAD_MODEL.subprocess, "run", side_effect=fake_curl
+        ) as run:
+            DOWNLOAD_MODEL.download_file(
+                "https://example.test/resolve/rev", self.output_dir, self.file_spec
+            )
+            DOWNLOAD_MODEL.download_file(
+                "https://example.test/resolve/rev", self.output_dir, self.file_spec
+            )
 
         final_path = self.output_dir / "shard.bin"
         self.assertEqual(final_path.read_bytes(), b"hello")
@@ -49,17 +55,22 @@ class DownloadModelTests(unittest.TestCase):
     def test_complete_partial_file_is_promoted_without_curl(self) -> None:
         (self.output_dir / "shard.bin.part").write_bytes(b"hello")
         with patch.object(DOWNLOAD_MODEL.subprocess, "run") as run:
-            DOWNLOAD_MODEL.download_file("https://example.test/resolve/rev", self.output_dir, self.file_spec)
+            DOWNLOAD_MODEL.download_file(
+                "https://example.test/resolve/rev", self.output_dir, self.file_spec
+            )
         run.assert_not_called()
         self.assertEqual((self.output_dir / "shard.bin").read_bytes(), b"hello")
 
     def test_existing_mismatch_is_not_overwritten(self) -> None:
         final_path = self.output_dir / "shard.bin"
         final_path.write_bytes(b"bad")
-        with patch.object(DOWNLOAD_MODEL.subprocess, "run") as run, self.assertRaises(
-            DOWNLOAD_MODEL.DownloadError
+        with (
+            patch.object(DOWNLOAD_MODEL.subprocess, "run") as run,
+            self.assertRaises(DOWNLOAD_MODEL.DownloadError),
         ):
-            DOWNLOAD_MODEL.download_file("https://example.test/resolve/rev", self.output_dir, self.file_spec)
+            DOWNLOAD_MODEL.download_file(
+                "https://example.test/resolve/rev", self.output_dir, self.file_spec
+            )
         run.assert_not_called()
         self.assertEqual(final_path.read_bytes(), b"bad")
 
@@ -68,28 +79,40 @@ class DownloadModelTests(unittest.TestCase):
         outside.mkdir()
         (self.output_dir / "nested").symlink_to(outside, target_is_directory=True)
         spec = {**self.file_spec, "file": "nested/shard.bin"}
-        with patch.object(DOWNLOAD_MODEL.subprocess, "run") as run, self.assertRaises(
-            DOWNLOAD_MODEL.DownloadError
+        with (
+            patch.object(DOWNLOAD_MODEL.subprocess, "run") as run,
+            self.assertRaises(DOWNLOAD_MODEL.DownloadError),
         ):
-            DOWNLOAD_MODEL.download_file("https://example.test/resolve/rev", self.output_dir, spec)
+            DOWNLOAD_MODEL.download_file(
+                "https://example.test/resolve/rev", self.output_dir, spec
+            )
         run.assert_not_called()
         self.assertFalse((outside / "shard.bin").exists())
 
     def test_model_dir_precedence(self) -> None:
-        with patch.dict(os.environ, {"MODEL_DIR": "/first", "NINFER_MODEL_DIR": "/second"}):
+        with patch.dict(
+            os.environ, {"MODEL_DIR": "/first", "NINFER_MODEL_DIR": "/second"}
+        ):
             self.assertEqual(DOWNLOAD_MODEL.output_directory(self.root), Path("/first"))
         with patch.dict(os.environ, {"MODEL_DIR": "", "NINFER_MODEL_DIR": "/second"}):
-            self.assertEqual(DOWNLOAD_MODEL.output_directory(self.root), Path("/second"))
+            self.assertEqual(
+                DOWNLOAD_MODEL.output_directory(self.root), Path("/second")
+            )
 
     def test_manifest_rejects_parent_component(self) -> None:
         manifest = self.root / "manifest.json"
-        manifest.write_text(json.dumps({
-            "name": "test",
-            "format": "test",
-            "repo": "owner/model",
-            "revision": "rev",
-            "files": [{**self.file_spec, "file": "../escape.bin"}],
-        }), encoding="utf-8")
+        manifest.write_text(
+            json.dumps(
+                {
+                    "name": "test",
+                    "format": "test",
+                    "repo": "owner/model",
+                    "revision": "rev",
+                    "files": [{**self.file_spec, "file": "../escape.bin"}],
+                }
+            ),
+            encoding="utf-8",
+        )
         with self.assertRaises(DOWNLOAD_MODEL.ManifestError):
             DOWNLOAD_MODEL.load_manifest(manifest)
 
