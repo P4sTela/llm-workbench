@@ -16,3 +16,4 @@ __pycache__/
 
 # Local Git worktrees under the repository root
 .worktrees/
+.pi/work/

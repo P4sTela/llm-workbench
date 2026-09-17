@@ -41,10 +41,16 @@ Container Toolkit:
 
 ```bash
 export MODEL_DIR=/path/to/ninfer-models
-NINFER_MODEL_DIR="$MODEL_DIR" bash scripts/download-qwen38-27b.sh
+python3 scripts/download-model.py models/manifests/qwen3.8-27b-ninfer-v2.json
 docker compose -f docker/ninfer/compose.yaml build
 MODEL_DIR="$MODEL_DIR" docker compose -f docker/ninfer/compose.yaml up
 ```
+
+The manifest-driven command is canonical. It uses `MODEL_DIR`, then
+`NINFER_MODEL_DIR`, and otherwise `models/`. Each exact quantization or artifact
+gets its own manifest so future multi-file downloads do not need a new downloader.
+The compatibility command `NINFER_MODEL_DIR="$MODEL_DIR" bash scripts/download-qwen38-27b.sh`
+continues to use the same manifest.
 
 In another terminal, run the small local API check:
 
