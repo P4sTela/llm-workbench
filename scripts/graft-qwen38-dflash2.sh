@@ -3,7 +3,7 @@ set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 model_dir="${MODEL_DIR:-${NINFER_MODEL_DIR:-$root/models}}"
-artifact="$model_dir/qwen3_8_27b-v2.ninfer"
+artifact="$model_dir/qwen3_8_27b.ninfer"
 dflash2_dir="${DFlash2_MODEL_DIR:-$model_dir/dflash2-source}"
 out="$model_dir/qwen3_8_27b-v2-dflash2.ninfer"
 device="${DFlash2_DEVICE:-cpu}"

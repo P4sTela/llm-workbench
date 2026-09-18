@@ -4,7 +4,7 @@ Status: **experimental; engine integration and GPU run are not yet verified here
 
 ## Inputs
 
-- Target artifact: the existing NInfer V2 `qwen3_8_27b-v2.ninfer`.
+- Target artifact: the existing NInfer V2 `qwen3_8_27b.ninfer`.
 - Drafter: `z-lab/Qwen3.8-27B-DFlash2`, revision
   `ac04198556d7e8867853cbc356807b969f311b05`.
 - The manifest pins `config.json` (1,239 bytes) and `model.safetensors`
