@@ -86,7 +86,7 @@ source lives in the P4sTela fork, so also override the build args (see
 
 ```bash
 NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
-NINFER_COMMIT=119d22bfe6e47bec8236bb2561a91efc990c13a4 \
+NINFER_COMMIT=be9e76683a2bb6ba870690bf4cc4d95fe91a97f3 \
 NINFER_IMAGE=ninfer-4090:dflash2 \
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
   docker compose -f docker/ninfer/compose.yaml up --build
