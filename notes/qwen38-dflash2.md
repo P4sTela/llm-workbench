@@ -56,19 +56,23 @@ The DFlash2 engine source lives in the P4sTela fork (not upstream sergiuszm):
 
 - Repo: `https://github.com/P4sTela/ninfer-4090.git`
 - Branch: `feat/dflash2-qwen38-27b`
-- Build commit: `95f6a04dc8bf44a5999aef0ee208de7691f72b22` on `feat/dflash2-qwen38-27b` (salvage of the
+- Build commit: `1ff0d62f424ecb8ec153d86f34ca305aab750367` on `feat/dflash2-qwen38-27b` (salvage of the
   pi `dflash2-27b-finish` port + `sampling_device.cuh` synced to the upstream
   tile-topk sampler; static-audited, CUDA-verified pending).
 - Superseded commit `612d7aef` failed its first VM205 build
 NINFER_COMMIT must be a full 40-char SHA: the Dockerfile fetches it with `git fetch --depth 1`, which cannot resolve short SHA prefixes (or non-advertised commits) on GitHub. Branch names also fail the trailing rev-parse test, so always pass the full SHA of the branch tip.: the port pulled
   upstream `speculative_round.cuh`/`sampling.cuh` but left `sampling_device.cuh`
   at the sergiuszm-base version, so the 8 tile-topk primitives were undefined.
+  A follow-up build exposed two more gaps, both fixed in the build commit now
+  pinned below: the dflash2 small-T swiglu launcher lacked its header
+  declaration, and the r64_c96_k128 route exceeded the sm89 48 KiB SMEM cap
+  (it was tuned for sm120a); cols 65-96 now use r64_c80_k128.
 
 Build the DFlash2-capable image:
 
 ```bash
 NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
-NINFER_COMMIT=95f6a04dc8bf44a5999aef0ee208de7691f72b22 \
+NINFER_COMMIT=1ff0d62f424ecb8ec153d86f34ca305aab750367 \
 NINFER_IMAGE=ninfer-4090:dflash2 \
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
   docker compose -f docker/ninfer/compose.yaml up --build
