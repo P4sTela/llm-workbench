@@ -80,13 +80,13 @@ profile uses `SPEC=dflash2` and seven draft tokens; it does not enable the MTP
 checked here, but the full graft requires the target artifact and a GPU run is
 not yet verified in this checkout.
 
-Select the profile explicitly when launching Compose. The DFlash2 engine
-source lives in the P4sTela fork, so also override the build args (see
-`notes/qwen38-dflash2.md` for the exact commit):
+Select the profile explicitly when launching Compose. The DFlash2 runtime source
+pin is now the verified upstream `rtx4090-port` tip; also override the build args
+(see `notes/qwen38-dflash2.md` for the verification details):
 
 ```bash
-NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
-NINFER_COMMIT=cab5b6dec088e2d3ce5f621a656e1f2edc52a2f4 \
+NINFER_REPO=https://github.com/sergiuszm/ninfer-4090.git \
+NINFER_COMMIT=a889ce4377d0f88093bb491d851d29eb1555e4f8 \
 NINFER_IMAGE=ninfer-4090:dflash2 \
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
   docker compose -f docker/ninfer/compose.yaml up --build

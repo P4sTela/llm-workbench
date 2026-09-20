@@ -1,6 +1,9 @@
 # Qwen3.8-27B + DFlash2
 
-Status: **experimental; engine integration and GPU run are not yet verified here**.
+Status: **experimental; the upstream engine integration and local VM205 GPU run are not yet verified here**.
+
+The current VM205 grafted artifact is already present, but the image must be rebuilt
+from the upstream source pin below before runtime testing.
 
 ## Inputs
 
@@ -30,6 +33,14 @@ set it only when the conversion environment has a supported accelerator.
 The graft preserves the source artifact identity (`qwen3.8-27b/groupwise-int`
 or `nvfp4full`) rather than rewriting it.
 
+The upstream artifact manifest documents the complete artifact as
+`20,437,336,576` bytes with `1,190` objects (`1,184` tensors + `6` resources),
+including `66` DFlash2 companion objects, and SHA-256
+`0634abb07024221de141456cf04a42ab74b18bc38e1b781c6eb2e062a467eec3`.
+The VM205 graft output reports the same byte size, `1,190` objects, and `66`
+grafted DFlash2 objects. Its VM file hash has not been independently read back
+here, so this does not claim hash identity.
+
 The graft helper imports the vendored conversion closure under `tools/` and
 therefore needs CPU PyTorch and `safetensors` in the Python environment. This
 checkout only performs static Python checks; the full graft needs the 18 GB
@@ -37,8 +48,9 @@ source artifact and 3.85 GB drafter weights.
 
 ## Serve
 
-Build the NInfer image, then select the DFlash2 env file in
-`docker/ninfer/compose.yaml` (or copy its values into a local env file):
+Build the NInfer image from the upstream source pin below, then select the
+DFlash2 env file in `docker/ninfer/compose.yaml` (or copy its values into a
+local env file):
 
 ```bash
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
@@ -46,33 +58,36 @@ NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
 ```
 
 The current compose file still points at the baseline MTP env file by default;
-this is intentional until the DFlash2 engine fork passes its independent build
-and GPU smoke checks. Do not report throughput or acceptance length from this
-recipe until a real RTX 4090 run has produced logs.
+this is intentional until the DFlash2 image built from the upstream tip passes
+its independent build and GPU smoke checks. Do not report throughput or
+acceptance length from this recipe until a real RTX 4090 run has produced logs.
 
 ## Build on VM205 (RTX 4090)
 
-The DFlash2 engine source lives in the P4sTela fork (not upstream sergiuszm):
+The runtime source pin is now the verified upstream `rtx4090-port` tip:
 
-- Repo: `https://github.com/P4sTela/ninfer-4090.git`
-- Branch: `feat/dflash2-qwen38-27b`
-- Build commit: `cab5b6dec088e2d3ce5f621a656e1f2edc52a2f4` on `feat/dflash2-qwen38-27b` (salvage of the
-  pi `dflash2-27b-finish` port + `sampling_device.cuh` synced to the upstream
-  tile-topk sampler; static-audited, CUDA-verified pending).
-- Superseded commit `612d7aef` failed its first VM205 build
-NINFER_COMMIT must be a full 40-char SHA: the Dockerfile fetches it with `git fetch --depth 1`, which cannot resolve short SHA prefixes (or non-advertised commits) on GitHub. Branch names also fail the trailing rev-parse test, so always pass the full SHA of the branch tip.: the port pulled
-  upstream `speculative_round.cuh`/`sampling.cuh` but left `sampling_device.cuh`
-  at the sergiuszm-base version, so the 8 tile-topk primitives were undefined.
-  A follow-up build exposed two more gaps, both fixed in the build commit now
-  pinned below: the dflash2 small-T swiglu launcher lacked its header
-  declaration, and the r64_c96_k128 route exceeded the sm89 48 KiB SMEM cap
-  (it was tuned for sm120a); cols 65-96 now use r64_c80_k128.
+- Repo: `https://github.com/sergiuszm/ninfer-4090.git`
+- Branch: `rtx4090-port`
+- Build commit: `a889ce4377d0f88093bb491d851d29eb1555e4f8` on `rtx4090-port` (branch tip).
+- Relative to the old common ancestor `1bd56c9a`, the current custom fork work is
+  100 commits behind upstream and 9 commits ahead due to custom changes. This is
+  lineage context only; the GitHub ahead/behind banner alone is not evidence of
+  a feature.
+- Direct inspection of upstream tip `a889ce4377d0f88093bb491d851d29eb1555e4f8`
+  shows Qwen3.8-27B DFlash2 support, including the `qwen3_8_27b` DFlash2
+  converter/runtime files, 2048/4096 sliding-window support, and the `sm_89`
+  DFlash2 W8 shared-memory fix.
+
+`NINFER_COMMIT` must be a full 40-character SHA. The Dockerfile fetches it with
+`git fetch --depth 1`, which cannot resolve short SHA prefixes (or non-advertised
+commits) on GitHub. Branch names also fail the trailing `rev-parse` test, so
+always pass the full SHA of the branch tip.
 
 Build the DFlash2-capable image:
 
 ```bash
-NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
-NINFER_COMMIT=cab5b6dec088e2d3ce5f621a656e1f2edc52a2f4 \
+NINFER_REPO=https://github.com/sergiuszm/ninfer-4090.git \
+NINFER_COMMIT=a889ce4377d0f88093bb491d851d29eb1555e4f8 \
 NINFER_IMAGE=ninfer-4090:dflash2 \
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
   docker compose -f docker/ninfer/compose.yaml up --build
@@ -85,6 +100,9 @@ docker compose -f docker/ninfer/compose.yaml up --build
 ```
 
 ### A/B acceptance plan (post build)
+
+The local VM205 GPU run remains unverified here. The baseline in step 1 is a
+prior recorded comparison value, not a verified DFlash2 result.
 
 1. `--spec mtp --draft-tokens 3` (LM_HEAD_DRAFT=true): baseline 148.6 t/s decode,
    accept ~81% (262K E8, first tested run).
@@ -99,6 +117,6 @@ docker compose -f docker/ninfer/compose.yaml up --build
 
 ## Upstream reference
 
-The model card describes DFlash2's published H200 measurements and the SGLang/
-vLLM integration. Those numbers are upstream measurements, not RTX 4090 results
-for this workbench.
+The model card describes DFlash2's published RTX 5090 measurements and the
+SGLang/vLLM integration. Those numbers are upstream measurements, not RTX 4090
+evidence for this workbench; the local VM205 GPU run remains unverified.
