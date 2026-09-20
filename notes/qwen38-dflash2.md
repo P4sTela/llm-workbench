@@ -56,7 +56,7 @@ The DFlash2 engine source lives in the P4sTela fork (not upstream sergiuszm):
 
 - Repo: `https://github.com/P4sTela/ninfer-4090.git`
 - Branch: `feat/dflash2-qwen38-27b`
-- Build commit: `31cc1914d2c39722d4773b3308a1c740d2165d34` on `feat/dflash2-qwen38-27b` (salvage of the
+- Build commit: `cab5b6dec088e2d3ce5f621a656e1f2edc52a2f4` on `feat/dflash2-qwen38-27b` (salvage of the
   pi `dflash2-27b-finish` port + `sampling_device.cuh` synced to the upstream
   tile-topk sampler; static-audited, CUDA-verified pending).
 - Superseded commit `612d7aef` failed its first VM205 build
@@ -72,7 +72,7 @@ Build the DFlash2-capable image:
 
 ```bash
 NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git \
-NINFER_COMMIT=31cc1914d2c39722d4773b3308a1c740d2165d34 \
+NINFER_COMMIT=cab5b6dec088e2d3ce5f621a656e1f2edc52a2f4 \
 NINFER_IMAGE=ninfer-4090:dflash2 \
 NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
   docker compose -f docker/ninfer/compose.yaml up --build
