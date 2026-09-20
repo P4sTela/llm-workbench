@@ -70,7 +70,7 @@ The runtime source pin is now the verified upstream `rtx4090-port` tip:
 - Branch: `rtx4090-port`
 - Build commit: `a889ce4377d0f88093bb491d851d29eb1555e4f8` on `rtx4090-port` (branch tip).
 - Relative to the old common ancestor `1bd56c9a`, the current custom fork work is
-  100 commits behind upstream and 9 commits ahead due to custom changes. This is
+  10 commits ahead due to custom changes, while upstream is 100 commits ahead. This is
   lineage context only; the GitHub ahead/behind banner alone is not evidence of
   a feature.
 - Direct inspection of upstream tip `a889ce4377d0f88093bb491d851d29eb1555e4f8`
