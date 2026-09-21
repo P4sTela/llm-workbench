@@ -27,12 +27,13 @@ This is a public collection of Docker configurations, machine-specific settings,
 - Mark results as tested, experimental, or failed instead of presenting guesses as benchmarks.
 - Do not commit API keys, personal prompts, session logs, or private tool definitions.
 
-## First recipe: NInfer V2 / Qwen3.8-27B / RTX 4090
+## Canonical runtime: NInfer V2 / Qwen3.8-27B / RTX 4090
 
-This is the first reproducible recipe, kept deliberately small. It builds the public
-`sergiuszm/ninfer-4090` source at commit
-`1bd56c9a1bdf457c6188391a9385d44d86e953aa`, which pins the `sm_89` CUDA target. The
-model stays on the host and is mounted read-only; it is not part of the image.
+The canonical runtime is a verified 245760-token long-context run on VM205 with an
+NVIDIA RTX 4090. It builds the P4sTela fork of `ninfer-4090` at the full commit
+`a889ce4377d0f88093bb491d851d29eb1555e4f8` and uses the
+`ninfer-4090:dflash2` image. The model stays on the host and is mounted read-only; it
+is not part of the image.
 
 ### Clean-checkout workflow
 
@@ -42,15 +43,16 @@ Container Toolkit:
 ```bash
 export MODEL_DIR=/path/to/ninfer-models
 python3 scripts/download-model.py models/manifests/qwen3.8-27b-ninfer-v2.json
-docker compose -f docker/ninfer/compose.yaml build
-MODEL_DIR="$MODEL_DIR" docker compose -f docker/ninfer/compose.yaml up
+bash scripts/download-qwen38-dflash2.sh
+bash scripts/graft-qwen38-dflash2.sh
+MODEL_DIR="$MODEL_DIR" docker compose -f docker/ninfer/compose.yaml up --build
 ```
 
 The manifest-driven command is canonical. It uses `MODEL_DIR`, then
 `NINFER_MODEL_DIR`, and otherwise `models/`. Each exact quantization or artifact
 gets its own manifest so future multi-file downloads do not need a new downloader.
 The compatibility command `NINFER_MODEL_DIR="$MODEL_DIR" bash scripts/download-qwen38-27b.sh`
-continues to use the same manifest.
+continues to use the same base-artifact manifest.
 
 In another terminal, run the small local API check:
 
@@ -58,39 +60,35 @@ In another terminal, run the small local API check:
 bash scripts/smoke-ninfer.sh
 ```
 
-The published port defaults to `127.0.0.1:8080`; override it with `NINFER_BIND_ADDRESS`
-and `NINFER_PORT` when needed. The Compose command reads every launch value from
-`configs/ninfer-v2-qwen38-4090-262k-e8-mtp3.env` explicitly.
+The published port defaults to `127.0.0.1:8080`; override it with
+`NINFER_BIND_ADDRESS` and `NINFER_PORT` when needed. `MODEL_DIR` remains a host
+mount override. Compose selects
+`configs/ninfer-v2-qwen38-4090-245760-e8-dflash2.env` by default.
 
-The repository's notes record the earlier real RTX 4090 run. In this checkout I verified
-the source/build contract and static recipe shape. Docker Buildx using the `orbstack`
-builder successfully built the Dockerfile for `linux/amd64`, and the resulting image was
-loaded as `llm-workbench-ninfer-v2:sm89`. In that image, `ninfer-serve --help` and
-`ninfer --help` also ran successfully without a GPU, with the expected NVIDIA
-driver-not-detected warning. GPU runtime on an NVIDIA host, model download, and the smoke
-script against a real NInfer server remain untested here.
+### Verified DFlash2 runtime
 
-## DFlash2 experiment: Qwen3.8-27B / RTX 4090
+The VM205 run uses these canonical runtime reservations: `MAX_CONTEXT=245760`,
+`KV_CAPACITY=245760`, `PREFILL_CHUNK=512`, `KV_DTYPE=rk4v4-e8`,
+`SPEC=dflash2`, `DRAFT_TOKENS=7`, `LM_HEAD_DRAFT=false`,
+`PRESERVE_THINKING=true`, `DEFAULT_MAX_TOKENS=16384`, `HOST_KV_MIB=32768`,
+`HOST_STATE_SLOTS=16`, `MAX_CONCURRENCY=1`, `MAX_PENDING_REQUESTS=16`, and
+`PENDING_TIMEOUT_MS=600000`. The artifact is
+`qwen3_8_27b-v2-dflash2.ninfer`, with 20,437,336,576 bytes and SHA-256
+`0634abb07024221de141456cf04a42ab74b18bc38e1b781c6eb2e062a467eec3`.
 
-`notes/qwen38-dflash2.md` documents the experimental DFlash2 path. It pins the
-`z-lab/Qwen3.8-27B-DFlash2` drafter, downloads it into an isolated directory,
-and grafts its W8/BF16 objects onto the existing V2 target artifact. The runtime
-profile uses `SPEC=dflash2` and seven draft tokens; it does not enable the MTP
-`--lm-head-draft` flag. The recipe and artifact conversion are statically
-checked here, but the full graft requires the target artifact and a GPU run is
-not yet verified in this checkout.
+`notes/qwen38-dflash2.md` records the drafter inputs, graft provenance, and the
+measured VM205 artifact metadata. The generated graft report is local metadata and
+must not be committed.
 
-Select the profile explicitly when launching Compose. The DFlash2 runtime source
-pin is now the verified upstream `rtx4090-port` tip; also override the build args
-(see `notes/qwen38-dflash2.md` for the verification details):
+## MTP3 comparison and legacy 262k profiles
 
-```bash
-NINFER_REPO=https://github.com/sergiuszm/ninfer-4090.git \
-NINFER_COMMIT=a889ce4377d0f88093bb491d851d29eb1555e4f8 \
-NINFER_IMAGE=ninfer-4090:dflash2 \
-NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
-  docker compose -f docker/ninfer/compose.yaml up --build
-```
+`configs/ninfer-v2-qwen38-4090-245760-e8-mtp3.env` is the 245760-token MTP3
+comparison profile. It uses the base `qwen3_8_27b.ninfer`, three draft tokens, and
+`LM_HEAD_DRAFT=true`; GPU validation is pending for this A/B comparison.
+
+The existing `262k` profile files remain in the repository for historical reference.
+`262144` is an unsupported/failed-capacity experiment for the RTX 4090 canonical
+runtime, not a default or a replacement for the verified 245760-token profile.
 
 ## License
 

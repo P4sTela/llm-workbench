@@ -3,8 +3,8 @@
 FROM nvidia/cuda:13.1.2-devel-ubuntu24.04 AS build
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG NINFER_REPO=https://github.com/sergiuszm/ninfer-4090.git
-ARG NINFER_COMMIT=1bd56c9a1bdf457c6188391a9385d44d86e953aa
+ARG NINFER_REPO=https://github.com/P4sTela/ninfer-4090.git
+ARG NINFER_COMMIT=a889ce4377d0f88093bb491d851d29eb1555e4f8
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \

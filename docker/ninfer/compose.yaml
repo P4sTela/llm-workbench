@@ -4,11 +4,12 @@ services:
       context: ../..
       dockerfile: docker/ninfer/Dockerfile
       args:
-        NINFER_REPO: ${NINFER_REPO:-https://github.com/sergiuszm/ninfer-4090.git}
-        NINFER_COMMIT: ${NINFER_COMMIT:-1bd56c9a1bdf457c6188391a9385d44d86e953aa}
-    image: ${NINFER_IMAGE:-ninfer-4090:sm89}
+        NINFER_REPO: ${NINFER_REPO:-https://github.com/P4sTela/ninfer-4090.git}
+        NINFER_COMMIT: >-
+          ${NINFER_COMMIT:-a889ce4377d0f88093bb491d851d29eb1555e4f8}
+    image: ${NINFER_IMAGE:-ninfer-4090:dflash2}
     env_file:
-      - ${NINFER_PROFILE:-../../configs/ninfer-v2-qwen38-4090-262k-e8-mtp3.env}
+      - ${NINFER_PROFILE:-../../configs/ninfer-v2-qwen38-4090-245760-e8-dflash2.env}
     environment:
       NINFER_SERVER_HOST: 0.0.0.0
       NINFER_SERVER_PORT: 8080

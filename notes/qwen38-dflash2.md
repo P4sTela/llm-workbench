@@ -1,9 +1,8 @@
 # Qwen3.8-27B + DFlash2
 
-Status: **experimental; the upstream engine integration and local VM205 GPU run are not yet verified here**.
-
-The current VM205 grafted artifact is already present, but the image must be rebuilt
-from the upstream source pin below before runtime testing.
+Status: **verified on VM205 with an NVIDIA RTX 4090**. This note records the
+canonical 245760-token DFlash2 runtime. The matching 245760-token MTP3 profile is
+reserved for an A/B comparison; GPU validation is pending.
 
 ## Inputs
 
@@ -33,90 +32,62 @@ set it only when the conversion environment has a supported accelerator.
 The graft preserves the source artifact identity (`qwen3.8-27b/groupwise-int`
 or `nvfp4full`) rather than rewriting it.
 
-The upstream artifact manifest documents the complete artifact as
-`20,437,336,576` bytes with `1,190` objects (`1,184` tensors + `6` resources),
-including `66` DFlash2 companion objects, and SHA-256
+The measured VM205 artifact is `20437336576` bytes with SHA-256
 `0634abb07024221de141456cf04a42ab74b18bc38e1b781c6eb2e062a467eec3`.
-The VM205 graft output reports the same byte size, `1,190` objects, and `66`
-grafted DFlash2 objects. Its VM file hash has not been independently read back
-here, so this does not claim hash identity.
+It contains `1,190` objects (`1,184` tensors + `6` resources), including `66`
+DFlash2 companion objects. The generated absolute-path report
+`models/qwen3_8_27b-v2-dflash2.ninfer.graft.json` is ignored and is not a commit
+target; portable artifact metadata is recorded here instead.
 
 The graft helper imports the vendored conversion closure under `tools/` and
-therefore needs CPU PyTorch and `safetensors` in the Python environment. This
-checkout only performs static Python checks; the full graft needs the 18 GB
-source artifact and 3.85 GB drafter weights.
+therefore needs CPU PyTorch and `safetensors` in the Python environment. Recreating
+the artifact needs the 18 GB source artifact and 3.85 GB drafter weights.
 
-## Serve
+## Canonical runtime
 
-Build the NInfer image from the upstream source pin below, then select the
-DFlash2 env file in `docker/ninfer/compose.yaml` (or copy its values into a
-local env file):
+The runtime source is pinned to the P4sTela fork:
 
-```bash
-NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
-  docker compose -f docker/ninfer/compose.yaml up --build
-```
+- Repo: `https://github.com/P4sTela/ninfer-4090.git`
+- Branch: `validated/rtx4090-port-a889ce4`
+- Tag: `vm205-dflash2-a889ce4`
+- Commit: `a889ce4377d0f88093bb491d851d29eb1555e4f8`
+- Image: `ninfer-4090:dflash2`
+- Model: `qwen3_8_27b-v2-dflash2.ninfer`
 
-The current compose file still points at the baseline MTP env file by default;
-this is intentional until the DFlash2 image built from the upstream tip passes
-its independent build and GPU smoke checks. Do not report throughput or
-acceptance length from this recipe until a real RTX 4090 run has produced logs.
+The Dockerfile fetches the full 40-character commit with `git fetch --depth 1` and
+checks the resulting `rev-parse` value. Compose defaults to
+`configs/ninfer-v2-qwen38-4090-245760-e8-dflash2.env` and keeps the published port
+loopback-only by default.
 
-## Build on VM205 (RTX 4090)
+The verified profile reserves:
 
-The runtime source pin is now the verified upstream `rtx4090-port` tip:
+| Setting | Value |
+| --- | --- |
+| `MAX_CONTEXT` / `KV_CAPACITY` | `245760` |
+| `PREFILL_CHUNK` | `512` |
+| `KV_DTYPE` | `rk4v4-e8` |
+| `SPEC` / `DRAFT_TOKENS` | `dflash2` / `7` |
+| `LM_HEAD_DRAFT` / `PRESERVE_THINKING` | `false` / `true` |
+| `DEFAULT_MAX_TOKENS` | `16384` |
+| `HOST_KV_MIB` / `HOST_STATE_SLOTS` | `32768` / `16` |
+| `MAX_CONCURRENCY` / `MAX_PENDING_REQUESTS` | `1` / `16` |
+| `PENDING_TIMEOUT_MS` | `600000` |
 
-- Repo: `https://github.com/sergiuszm/ninfer-4090.git`
-- Branch: `rtx4090-port`
-- Build commit: `a889ce4377d0f88093bb491d851d29eb1555e4f8` on `rtx4090-port` (branch tip).
-- Relative to the old common ancestor `1bd56c9a`, the current custom fork work is
-  10 commits ahead due to custom changes, while upstream is 100 commits ahead. This is
-  lineage context only; the GitHub ahead/behind banner alone is not evidence of
-  a feature.
-- Direct inspection of upstream tip `a889ce4377d0f88093bb491d851d29eb1555e4f8`
-  shows Qwen3.8-27B DFlash2 support, including the `qwen3_8_27b` DFlash2
-  converter/runtime files, 2048/4096 sliding-window support, and the `sm_89`
-  DFlash2 W8 shared-memory fix.
-
-`NINFER_COMMIT` must be a full 40-character SHA. The Dockerfile fetches it with
-`git fetch --depth 1`, which cannot resolve short SHA prefixes (or non-advertised
-commits) on GitHub. Branch names also fail the trailing `rev-parse` test, so
-always pass the full SHA of the branch tip.
-
-Build the DFlash2-capable image:
-
-```bash
-NINFER_REPO=https://github.com/sergiuszm/ninfer-4090.git \
-NINFER_COMMIT=a889ce4377d0f88093bb491d851d29eb1555e4f8 \
-NINFER_IMAGE=ninfer-4090:dflash2 \
-NINFER_PROFILE=../../configs/ninfer-v2-qwen38-4090-262k-e8-dflash2.env \
-  docker compose -f docker/ninfer/compose.yaml up --build
-```
-
-MTP baseline (unchanged defaults):
+Reproduce the serving setup with:
 
 ```bash
 docker compose -f docker/ninfer/compose.yaml up --build
 ```
 
-### A/B acceptance plan (post build)
+## MTP3 comparison and capacity boundary
 
-The local VM205 GPU run remains unverified here. The baseline in step 1 is a
-prior recorded comparison value, not a verified DFlash2 result.
+`configs/ninfer-v2-qwen38-4090-245760-e8-mtp3.env` keeps the same 245760-token
+context, KV capacity, prefill chunk, E8 KV type, and host/runtime reservations.
+It switches to `qwen3_8_27b.ninfer`, `SPEC=mtp`, three draft tokens, and
+`LM_HEAD_DRAFT=true`. GPU validation remains pending for this A/B profile.
 
-1. `--spec mtp --draft-tokens 3` (LM_HEAD_DRAFT=true): baseline 148.6 t/s decode,
-   accept ~81% (262K E8, first tested run).
-2. `--spec dflash2 --draft-tokens 7`: measure decode t/s, prefill t/s,
-   acceptance length/rate with a 27K-token prompt (code + prose mix).
-3. VRAM: watch the headroom. Graft adds ~1.1-2.2 GiB; if 262K context OOMs,
-   fall back to MAX_CONTEXT=200000 or KV_DTYPE=rk2v4-e8 before judging the
-   drafter.
-4. Open question: GDN state slot save/restore is not DFlash-aware (docs);
-   verify host-state-slot behaviour before enabling host caching on the
-   dflash2 profile.
-
-## Upstream reference
-
-The model card describes DFlash2's published RTX 5090 measurements and the
-SGLang/vLLM integration. Those numbers are upstream measurements, not RTX 4090
-evidence for this workbench; the local VM205 GPU run remains unverified.
+The existing `262k` profile files are retained for historical reference. `262144`
+is an unsupported/failed-capacity experiment for the RTX 4090 canonical runtime;
+it is not the default and should not be used to describe the verified run.
+Architecture documentation and model `max_position_embeddings` metadata are not
+being changed by this runtime canonicalization.
