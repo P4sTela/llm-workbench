@@ -17,3 +17,6 @@ __pycache__/
 # Local Git worktrees under the repository root
 .worktrees/
 .pi/work/
+# Local DFlash2 conversion inputs and generated reports
+models/dflash2-source/
+models/*.graft.json
