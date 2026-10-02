@@ -18,7 +18,7 @@ The first start includes model download and setup. Follow startup with:
 docker compose -f docker/strata/compose.yaml logs -f strata
 ```
 
-The default profile is `configs/strata-qwen38-flash-next-4090.env`: `MODEL=IQ3_S`, 262144-token native context, vision enabled, and GPU 0. This is the single main profile. `configs/strata-qwen38-flash-next-4090-iq2xs.env` is an optional lower-memory alternative for the same service. Switch it with `STRATA_PROFILE=../../configs/strata-qwen38-flash-next-4090-iq2xs.env`; changing an already-installed model's settings requires `REINSTALL=1`.
+The default profile is `configs/strata-qwen38-flash-next-4090.env`: `MODEL=IQ3_S`, 262144-token native context, vision enabled, and GPU 0. This is the single main profile. `configs/strata-qwen38-flash-next-4090-iq2xs.env` is an optional lower-memory alternative for the same service. Switch it with `STRATA_PROFILE=../../configs/strata-qwen38-flash-next-4090-iq2xs.env`. For an already-installed model, a profile edit alone does not update the persisted `/data/config` setup; rerun `setup.py --setup --yes ... --no-start` and preserve its generated config. This Compose service does not forward `REINSTALL`, so a host-shell `REINSTALL=1` prefix alone does not trigger setup.
 
 The API identifies the model as `qwen3.8-flash-next`. Run the smoke test locally; when authentication is enabled, export `STRATA_API_KEY` into the shell before running it:
 
