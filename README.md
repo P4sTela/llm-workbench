@@ -7,7 +7,7 @@ This is a public collection of Docker configurations, machine-specific settings,
 ## Current focus
 
 - Qwen3.8-27B on an NVIDIA RTX 4090
-- NInfer and llama.cpp
+- NInfer, llama.cpp, and Strata
 - Long-context, KV-cache, speculative decoding, reasoning, and tool-use experiments
 - Reproducible configurations that can move to another Linux GPU host
 
@@ -89,6 +89,28 @@ comparison profile. It uses the base `qwen3_8_27b.ninfer`, three draft tokens, a
 The existing `262k` profile files remain in the repository for historical reference.
 `262144` is an unsupported/failed-capacity experiment for the RTX 4090 canonical
 runtime, not a default or a replacement for the verified 245760-token profile.
+
+## Strata (Qwen3.8-Flash-Next) recipe
+
+`docker/strata/` builds the official Strata engine (MIT) at a pinned commit
+and serves Qwen3.8-Flash-Next on the same RTX 4090. It is the consumer-GPU
+engine that makes the 125B-A6B MoE practical on one 24 GB card: experts live
+in system RAM, a lookup table on the SSD, and the active weights on the GPU.
+The recipe is a static preparation for an A/B against the llama.cpp
+Flash-Next sub profile; the image build, model download, and first API smoke
+on VM205 are still pending (see
+[`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
+
+```bash
+docker compose -f docker/strata/compose.yaml up --build
+STRATA_BASE_URL=http://127.0.0.1:8090 bash scripts/smoke-strata.sh
+```
+
+Profiles: `configs/strata-qwen38-flash-next-4090.env` (IQ3_S, quality) and
+`configs/strata-qwen38-flash-next-4090-iq2xs.env` (IQ2_XS, speed). The
+server publishes on `127.0.0.1:8090` so it can sit beside NInfer on 8080;
+the engines cannot share the GPU at the same time, so stop the other one
+first (same exclusivity rule as ComfyUI).
 
 ## License
 
