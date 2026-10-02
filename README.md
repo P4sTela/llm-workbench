@@ -29,7 +29,7 @@ This is a public collection of Docker configurations, machine-specific settings,
 
 ## Canonical runtime: Strata / Qwen3.8-Flash-Next / RTX 4090
 
-`docker/strata/` builds the official Strata engine (MIT) at a pinned commit and serves Qwen3.8-Flash-Next on the RTX 4090. Strata is the primary runtime configuration for this workbench, not a side-by-side A/B service. Its expert weights live in system RAM, with the active working set on the GPU. The VM205 image build, first model download, and API smoke test have not yet been run; runtime performance is therefore unverified (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
+`docker/strata/` builds the official Strata engine (MIT) at a pinned commit and serves Qwen3.8-Flash-Next on the RTX 4090. Strata is the primary runtime configuration for this workbench, not a side-by-side A/B service. Its expert weights live in system RAM, with the active working set on the GPU. VM205 was deployed and API-smoke-tested at 131072 context on 2026-10-02; the repository profile is now set to the model-native 262144 context, but VM reconfiguration and 262K verification are pending. RTX 4090 performance remains unmeasured (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
 
 On a Linux host with an RTX 4090, an NVIDIA driver >= 580, Docker, and the NVIDIA Container Toolkit:
 
@@ -49,7 +49,7 @@ Follow the first-start model setup/download:
 docker compose -f docker/strata/compose.yaml logs -f strata
 ```
 
-The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 131072-token context, vision enabled, GPU 0). Model data and setup state are stored outside Git in `models/strata-data` by default; set `STRATA_DATA_DIR` in `.env` to move them elsewhere. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
+The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 262144-token native context, vision enabled, GPU 0). Model data and setup state are stored outside Git in `models/strata-data` by default; set `STRATA_DATA_DIR` in `.env` to move them elsewhere. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
 
 Run the API smoke test from the host. Set/export `STRATA_API_KEY` in the shell if API authentication is enabled:
 
