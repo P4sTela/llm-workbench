@@ -1,63 +1,36 @@
 # Strata (Qwen3.8-Flash-Next)
 
-This recipe builds the official Strata engine (MIT,
-[`Niko1221/Strata`](https://github.com/Niko1221/Strata)) at pinned commit
-`1678de333d0e0711bc414ad992b640e1a37dd814` as a single-stage CUDA image and
-serves Qwen3.8-Flash-Next on one RTX 4090 (sm_89). The build is the official
-Dockerfile from the pinned tree with the `COPY . .` replaced by a pinned
-shallow fetch, plus the GeForce forward-compat removal used by the NInfer
-recipe. The engine is compiled during `docker build`; the first container
-start only downloads the ~70 GB model into the `strata-data` volume and then
-starts the OpenAI- and Anthropic-compatible server on port 8080 (published as
-`127.0.0.1:8090` by default, so it can run beside the NInfer server on 8080).
+This is the workbench's canonical Strata runtime for Qwen3.8-Flash-Next on one RTX 4090 (sm_89), not a side-by-side A/B service. It builds the official Strata engine (MIT, [`Niko1221/Strata`](https://github.com/Niko1221/Strata)) at pinned commit `1678de333d0e0711bc414ad992b640e1a37dd814`. The Dockerfile follows the pinned upstream build, replacing `COPY . .` with a pinned shallow fetch and removing GeForce-incompatible forward-compatibility libraries. The engine is compiled during image build; the first container start downloads the model (about 70 GB) and starts the OpenAI- and Anthropic-compatible API on container port 8080.
 
-## Clean-checkout workflow
+## Main setup
 
-On a Linux host with an RTX 4090, an NVIDIA driver >= 580, Docker and the
-NVIDIA Container Toolkit:
+On a Linux host with an RTX 4090, an NVIDIA driver >= 580, Docker, and the NVIDIA Container Toolkit, copy `.env.example` to `.env`. The defaults bind only to loopback on port 8080. On VM205, set `STRATA_BIND_ADDRESS=100.0.0.159` and `STRATA_PORT=8080` in `.env` to publish only on its NetBird address. Set a non-empty `STRATA_API_KEY` before the first setup when binding beyond loopback; the key is saved with Strata's setup configuration. Keep `.env` private and untracked.
+
+Ensure no other inference service or GPU workload is using the RTX 4090, then start the canonical service:
 
 ```bash
-docker compose -f docker/strata/compose.yaml up --build
+docker compose -f docker/strata/compose.yaml up --build -d
 ```
 
-The default profile is `configs/strata-qwen38-flash-next-4090.env`
-(`MODEL=IQ3_S`, 131072 context, vision off, single card). The first start
-downloads the model, so allow time; `docker compose ps` reports `healthy`
-once the model is loaded. In another terminal:
+The first start includes model download and setup. Follow startup with:
 
 ```bash
-STRATA_BASE_URL=http://127.0.0.1:8090 bash scripts/smoke-strata.sh
+docker compose -f docker/strata/compose.yaml logs -f strata
 ```
 
-The API identifies the model as `qwen3.8-flash-next`.
+The default profile is `configs/strata-qwen38-flash-next-4090.env`: `MODEL=IQ3_S`, 131072-token context, vision enabled, and GPU 0. This is the single main profile. `configs/strata-qwen38-flash-next-4090-iq2xs.env` is an optional lower-memory alternative for the same service. Switch it with `STRATA_PROFILE=../../configs/strata-qwen38-flash-next-4090-iq2xs.env`; changing an already-installed model's settings requires `REINSTALL=1`.
 
-## Profiles
+The API identifies the model as `qwen3.8-flash-next`. Run the smoke test locally; when authentication is enabled, export `STRATA_API_KEY` into the shell before running it:
 
-- `configs/strata-qwen38-flash-next-4090.env` — quality profile: `IQ3_S`
-  (the largest size; "matches the full model on the published tests"). Needs
-  ~55 GB of combined RAM+VRAM, so it fits on VM205 (224 GiB RAM) with the
-  experts fully in RAM.
-- `configs/strata-qwen38-flash-next-4090-iq2xs.env` — speed profile: `IQ2_XS`
-  (the README-recommended size for 64 GB hosts).
+```bash
+STRATA_BASE_URL=http://127.0.0.1:8080 bash scripts/smoke-strata.sh
+```
 
-Switch profiles with `STRATA_PROFILE=...`. Switching to a model that is not
-yet on the volume runs the setup pass (model download) for it; switching
-between models already on the volume does not. To change a setting for an
-already-set-up model, add `REINSTALL=1`.
+The smoke test exercises health, model/status endpoints, a text completion, and OpenAI-compatible tool calling. From another NetBird peer, use `http://100.0.0.159:8080` and configure the API key in the client's secret/config mechanism.
 
-## Host requirements and caveats
+## Storage and GPU exclusivity
 
-- Strata loads 32-62 GB into RAM. VM205 has 224 GiB, so `LOW_RAM=auto`
-  keeps the experts in RAM (fastest mode). On smaller hosts set `LOW_RAM=on`
-  or pick a smaller `MODEL`.
-- The server refuses to start into a GPU another program already uses
-  (it checks free VRAM). On VM205 stop the NInfer container and any
-  `llama-server` unit first, or run Strata on the 27B slot only after the
-  other engine is down. This is the same exclusivity rule as ComfyUI.
-- The model download and the setup config live in the named `strata-data`
-  volume; the engine is part of the image. Pinning a new `STRATA_COMMIT`
-  requires a rebuild.
-- The published speeds (README, RTX 5070 12 GB and RX 9070 XT 16 GB) are
-  other hardware; the "100-140 tokens/s on an RTX 3090" figure is the
-  authors' estimate, not a measurement. VM205 results belong in
-  [`notes/strata-qwen38-flash-next-4090.md`](../../notes/strata-qwen38-flash-next-4090.md).
+- `STRATA_DATA_DIR` defaults to `models/strata-data` (outside tracked source and ignored by Git); it contains the downloaded model, prepared pack, MTP layer, and setup configuration. The engine remains in the image.
+- Strata needs substantial host RAM for experts. VM205 has 224 GiB; `LOW_RAM=auto` lets setup choose whether the experts remain in RAM. The alternative IQ2_XS profile targets lower-memory hosts.
+- Only one LLM/GPU workload can own this RTX 4090 at a time. Stop the currently active NInfer/llama.cpp/ComfyUI workload before starting Strata; this repository change does not stop or reconfigure VM205 services.
+- Published speeds from the upstream README are from different GPUs. The ~100–140 tokens/s RTX 3090 number is an author estimate, not a measurement. VM205 performance and first-run behavior remain unverified until the GPU run is performed; record results in [`notes/strata-qwen38-flash-next-4090.md`](../../notes/strata-qwen38-flash-next-4090.md).

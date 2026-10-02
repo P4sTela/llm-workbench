@@ -7,24 +7,22 @@ services:
         STRATA_REPO: ${STRATA_REPO:-https://github.com/Niko1221/Strata.git}
         STRATA_COMMIT: ${STRATA_COMMIT:-1678de333d0e0711bc414ad992b640e1a37dd814}
         CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
-    image: ${STRATA_IMAGE:-strata-qwen4:4090}
+    image: ${STRATA_IMAGE:-strata-qwen38:4090}
     env_file:
-      # runtime choices for the entry point (FAMILY, MODEL, CONTEXT, VISION,
-      # KV, GPU/GPUS, LOW_RAM, ...); see configs/strata-qwen38-flash-next-4090.env
+      # The single default main profile; STRATA_PROFILE can select an alternative.
       - ${STRATA_PROFILE:-../../configs/strata-qwen38-flash-next-4090.env}
     environment:
-      # in-container server address; host binding is the port mapping below
+      # Container listener; host binding is controlled by the published port.
       HOST: 0.0.0.0
       PORT: "8080"
+      # Strata records this key in its setup config on first start. Set it before
+      # exposing the API to NetBird; keep the value only in the ignored .env.
+      API_KEY: ${STRATA_API_KEY:-}
     gpus: all
     ulimits:
       memlock: -1
     ports:
-      - "${STRATA_BIND_ADDRESS:-127.0.0.1}:${STRATA_PORT:-8090}:8080"
+      - "${STRATA_BIND_ADDRESS:-127.0.0.1}:${STRATA_PORT:-8080}:8080"
     volumes:
-      # model files, prepared pack, MTP layer and the recorded setup config;
-      # the engine lives in the image. First start downloads ~70 GB here.
-      - strata-data:/data
-
-volumes:
-  strata-data:
+      # Model files, prepared pack, MTP layer and setup config stay outside Git.
+      - ${STRATA_DATA_DIR:-../../models/strata-data}:/data
