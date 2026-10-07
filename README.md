@@ -23,21 +23,17 @@ This is a public collection of Docker configurations, machine-specific settings,
 
 - Pin model revisions and record checksums when a run matters.
 - Keep model weights outside Git and mount them into containers.
-- Keep host-specific values such as bind addresses in local `.env` files.
+- Record non-secret machine defaults in recipes; use environment overrides for other hosts and keep secrets in untracked local configuration.
 - Mark results as tested, experimental, or failed instead of presenting guesses as benchmarks.
 - Do not commit API keys, personal prompts, session logs, or private tool definitions.
 
 ## Canonical runtime: Strata / Qwen3.8-Flash-Next / RTX 4090
 
-`docker/strata/` builds the official Strata engine (MIT) at a pinned commit and serves Qwen3.8-Flash-Next on the RTX 4090. Strata is the primary runtime configuration for this workbench, not a side-by-side A/B service. Its expert weights live in system RAM, with the active working set on the GPU. VM205 was deployed and API-smoke-tested at 131072 context on 2026-10-02; the repository profile is now set to the model-native 262144 context, but VM reconfiguration and 262K verification are pending. RTX 4090 performance remains unmeasured (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
+`docker/strata/` builds the official Strata engine (MIT) at a pinned commit and serves Qwen3.8-Flash-Next on the RTX 4090. Strata is the primary runtime configuration for this workbench, not a side-by-side A/B service. Its expert weights live in system RAM, with the active working set on the GPU. VM205's current IQ3_S deployment uses 262144 context. RTX 4090 performance remains unmeasured (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
 
-On a Linux host with an RTX 4090, an NVIDIA driver >= 580, Docker, and the NVIDIA Container Toolkit:
+On VM205 (RTX 4090, NVIDIA driver >= 580, Docker, NVIDIA Container Toolkit), no `.env` is needed: Compose defaults to NetBird-only `100.0.0.159:8080`, host data directory `/opt/models`, and no API key. Do not expose this keyless API outside NetBird or run another inference engine on the same GPU.
 
-```bash
-cp .env.example .env
-```
-
-For VM205, edit the local `.env` to bind the service only to its NetBird address (`STRATA_BIND_ADDRESS=100.0.0.159`) and set `STRATA_PORT=8080`. Set a non-empty `STRATA_API_KEY` before exposing the API over the VPN. Keep `.env` untracked; the compose file maps that key to Strata's API authentication. Do not start another inference engine on the same GPU at the same time.
+On another host, override `STRATA_BIND_ADDRESS` (for example `127.0.0.1`), `STRATA_PORT`, and `STRATA_DATA_DIR` through environment variables or an optional untracked `.env` based on `.env.example`. Optional `STRATA_API_KEY` must be set before first setup; never commit secrets.
 
 ```bash
 docker compose -f docker/strata/compose.yaml up --build -d
@@ -49,15 +45,17 @@ Follow the first-start model setup/download:
 docker compose -f docker/strata/compose.yaml logs -f strata
 ```
 
-The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 262144-token native context, vision enabled, GPU 0). Model data and setup state are stored outside Git in `models/strata-data` by default; set `STRATA_DATA_DIR` in `.env` to move them elsewhere. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
+The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 262144-token native context, vision enabled, GPU 0). Model data and per-model setup state are stored outside Git in `/opt/models` by default. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
+
+The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/262144 recipe at Strata pin `1678de33`; `docker/strata/compose.yaml` retains that pin. The new `configs/strata-qwen38-flash-next-4090-ud-iq4xs.env` and `docker/strata/compose.iq4xs.yaml` select UD-IQ4_XS/262144 with Strata v0.1.39 (`a1641e9f`) in a separate image and a 60 GiB resident expert budget. Both use the same NetBird port 8080 and must be switched exclusively; see [switching instructions](docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
 
 Run the API smoke test from the host. Set/export `STRATA_API_KEY` in the shell if API authentication is enabled:
 
 ```bash
-STRATA_BASE_URL=http://127.0.0.1:8080 bash scripts/smoke-strata.sh
+STRATA_BASE_URL=http://100.0.0.159:8080 bash scripts/smoke-strata.sh
 ```
 
-The smoke test checks health, model/status endpoints, a text completion, and an OpenAI-compatible tool call. The API model id is `qwen3.8-flash-next`. If connecting from another NetBird peer, use `http://100.0.0.159:8080` and provide the API key through the client's secret/config mechanism.
+The smoke test checks health, model/status endpoints, a text completion, and an OpenAI-compatible tool call. The IQ3_S API model id is `qwen3.8-flash-next`; for the Unsloth profile also set `STRATA_MODEL_ID=qwen3.8-flash-next-unsloth`. Other NetBird peers connect to `http://100.0.0.159:8080`; no API key is required by default.
 
 ## Verified historical runtime: NInfer V2 / Qwen3.8-27B / RTX 4090
 

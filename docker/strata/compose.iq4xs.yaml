@@ -5,12 +5,12 @@ services:
       dockerfile: docker/strata/Dockerfile
       args:
         STRATA_REPO: ${STRATA_REPO:-https://github.com/Niko1221/Strata.git}
-        STRATA_COMMIT: ${STRATA_COMMIT:-1678de333d0e0711bc414ad992b640e1a37dd814}
+        STRATA_COMMIT: ${STRATA_COMMIT:-a1641e9f77aacad4d201b53c8a7ae8fa21059ebb}
         CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
-    image: ${STRATA_IMAGE:-strata-qwen38:4090}
+    image: ${STRATA_IMAGE:-strata-qwen38:4090-iq4xs}
     env_file:
-      # The single default main profile; STRATA_PROFILE can select an alternative.
-      - ${STRATA_PROFILE:-../../configs/strata-qwen38-flash-next-4090.env}
+      # Requires the v0.1.39 image; never select it with the IQ3_S image.
+      - ${STRATA_PROFILE:-../../configs/strata-qwen38-flash-next-4090-ud-iq4xs.env}
     environment:
       # Container listener; host binding is controlled by the published port.
       HOST: 0.0.0.0
@@ -24,5 +24,5 @@ services:
     ports:
       - "${STRATA_BIND_ADDRESS:-100.0.0.159}:${STRATA_PORT:-8080}:8080"
     volumes:
-      # Model files, prepared pack, MTP layer and setup config stay outside Git.
+      # Shared data, separate per-model setup configs; never run both services.
       - ${STRATA_DATA_DIR:-/opt/models}:/data

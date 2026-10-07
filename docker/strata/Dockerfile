@@ -6,8 +6,8 @@
 # commit (docs/INSTALL.md, "Docker (Linux)"), with the `COPY . .` replaced by
 # a pinned shallow fetch so the workbench recipe is reproducible from a clean
 # checkout. The engine is compiled during docker build; the first container
-# start only downloads the model (~70 GB) into the /data volume and starts
-# the OpenAI/Anthropic-compatible server on :8080.
+# start only downloads the selected model into the /data volume and starts
+# the OpenAI/Anthropic-compatible server on :8080 (IQ3_S or UD-IQ4_XS).
 #
 # Build:
 #   docker build -t strata-qwen4:4090 -f docker/strata/Dockerfile .
@@ -47,6 +47,9 @@ RUN git init . \
     && git checkout --detach "$STRATA_COMMIT" \
     && test "$(git rev-parse HEAD)" = "$STRATA_COMMIT"
 
+
+# Keep upstream's per-model setup flow, adding optional resident-budget wiring.
+COPY --chmod=755 docker/strata/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN python3 -m venv .venv \
     && .venv/bin/pip install --no-cache-dir --upgrade pip \
     && .venv/bin/pip install --no-cache-dir -r requirements.txt \
