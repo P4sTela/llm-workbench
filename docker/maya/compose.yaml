@@ -1,0 +1,29 @@
+services:
+  maya:
+    build:
+      context: ../..
+      dockerfile: docker/maya/Dockerfile
+      args:
+        MAYA_COMMIT: ${MAYA_COMMIT:-77697c37be6944e8971e91a4f494332f12a8e31d}
+        CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
+    image: ${MAYA_IMAGE:-maya-glm53:4090-v1.1.0}
+    env_file:
+      - ${MAYA_PROFILE:-../../configs/maya-glm53-flash-m-derisked-4090-dflash2.env}
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      # NetBird membership is the default access control; do not expose publicly.
+      API_KEY: ${MAYA_API_KEY:-}
+      MAYA_UPDATE_CHECK: "0"
+    gpus: all
+    ulimits:
+      memlock: -1
+    ports:
+      - "${MAYA_BIND_ADDRESS:-100.0.0.159}:${MAYA_PORT:-8080}:8080"
+    volumes:
+      # Keep model weights and setup state separate from existing Strata data.
+      - ${MAYA_DATA_DIR:-/opt/models/maya}:/data
+    init: true
+    restart: unless-stopped
+    # Allow the wrapper's 40s wait plus the engine's 50s shutdown.
+    stop_grace_period: 120s

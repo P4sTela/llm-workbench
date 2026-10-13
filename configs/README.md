@@ -6,9 +6,17 @@ Profiles should describe tested combinations of model, engine, hardware, context
 
 ## Qwen3.8-Flash-Next / RTX 4090
 
-- `strata-qwen38-flash-next-4090.env`: current VM205 IQ3_S/262144, vision enabled, int8 KV, GPU 0; use `docker/strata/compose.yaml` (Strata pin `1678de33`). The pre-change recipe is frozen at tag `canonical-strata-iq3s-262k`.
+- `strata-qwen38-flash-next-4090.env`: retained IQ3_S/262144 recipe, vision enabled, int8 KV, GPU 0; use `docker/strata/compose.yaml` (Strata pin `1678de33`). The pre-change recipe is frozen at tag `canonical-strata-iq3s-262k`.
 - `strata-qwen38-flash-next-4090-ud-iq4xs.env`: new Unsloth UD-IQ4_XS/262144, vision enabled, int8 KV, GPU 0, 60 GiB resident expert budget; use only `docker/strata/compose.iq4xs.yaml` (v0.1.39 pin `a1641e9f`). GPU validation is pending.
 - Both use VM205's NetBird-only `100.0.0.159:8080`, `/opt/models`, and no API key by default, without `.env`. Override these non-secret host values elsewhere. [Stop before switching](../docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
+
+## GLM-5.3-Flash / RTX 4090
+
+- `maya-glm53-flash-m-derisked-4090-dflash2.env`: default Project Maya v1.1.0 (`77697c37`), Maya-M-Derisked, 262144 context, FP16 latent KV, GPU 0, parallel 1, text only, DFlash2. The drafter requires noncommercial use under CC BY-NC-ND 4.0. PCIe share `0.00` is measured on VM205; recalibrate on other CPUs.
+- `maya-glm53-flash-m-derisked-4090.env`: retained 32768-context ordinary-decode comparison. `DRAFT=mtp` does not load MTP on a single GPU. Changing the installed draft requires explicit `REINSTALL=1` preparation.
+- `maya-glm53-flash-m-derisked-4090-1m-int8.env`: explicit non-default 1048576-context alternative with INT8 latent KV. Two uncached near-capacity fact-retrieval requests passed; initial reads took about 24–25 minutes. Cache compression changes numerical precision; broad quality preservation is unverified. Explicitly prepare when switching and return to the default profile afterwards.
+- All use `docker/maya/compose.yaml`; select alternatives through `MAYA_PROFILE`. Pinned target/drafter manifests enforce revisions, sizes and SHA-256. Model data and settings live in `/opt/models/maya`; draft modes have separate calibration homes. NetBird-only `100.0.0.159:8080`, no API key by default; never run both engines on the RTX 4090. [Build, calibrate, switch and roll back](../README.md#maya--glm-53-flash-maya-m-derisked--rtx-4090).
+- Verified on VM205: Japanese/code/8K checks; FP16 near-capacity retrieval at 64K, 128K, 256K and 512K; INT8 retrieval at 1M; OpenAI text/tool calls; Anthropic text/tool-result round trip; and automatic recovery from main-process termination. FP16 at 1M failed for insufficient expert-pool VRAM and automatically fell back to 512K. The final 256K/FP16 service retained its settings across restart and passed the short checks again. Full-VM reboot was not exercised. The Derisked edit remains experimental; refusal reduction and capability preservation are not guarantees.
 
 ## Qwen3.8-27B / RTX 4090
 

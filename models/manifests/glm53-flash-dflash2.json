@@ -1,0 +1,14 @@
+{
+  "name": "GLM-5.3-Flash DFlash2 Q4_K_M",
+  "format": "gguf",
+  "repo": "Anbeeld/GLM-5.3-Flash-DFlash2-GGUF",
+  "revision": "f3569acb7f9cee95e66d24442d75536eb00ab842",
+  "license": "CC BY-NC-ND 4.0",
+  "files": [
+    {
+      "file": "GLM-5.3-Flash-DFlash2-Q4_K_M.gguf",
+      "bytes": 697017248,
+      "sha256": "f4158ffb805b26c4fe439669c2009908a80ea89e1576ecea4d03eaded18f017c"
+    }
+  ]
+}

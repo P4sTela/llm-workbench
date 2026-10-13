@@ -3,7 +3,11 @@
 .env
 .env.*
 !.env.example
-models
+models/*
+!models/manifests/
+models/manifests/*
+!models/manifests/glm53-flash-maya-m-derisked.json
+!models/manifests/glm53-flash-dflash2.json
 **/*.ninfer
 **/*.gguf
 **/*.safetensors
