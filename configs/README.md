@@ -8,7 +8,7 @@ Profiles should describe tested combinations of model, engine, hardware, context
 
 - `strata-qwen38-flash-next-4090.env`: retained IQ3_S/262144 recipe, vision enabled, int8 KV, GPU 0; use `docker/strata/compose.yaml` (Strata pin `1678de33`). The pre-change recipe is frozen at tag `canonical-strata-iq3s-262k`.
 - `strata-qwen38-flash-next-4090-ud-iq4xs.env`: new Unsloth UD-IQ4_XS/262144, vision enabled, int8 KV, GPU 0, 60 GiB resident expert budget; use only `docker/strata/compose.iq4xs.yaml` (v0.1.45 pin `477ac13f`). GPU validation is pending.
-- `strata-qwen38-flash-next-4090-ud-q4kxl.env`: Unsloth UD-Q4_K_XL/262144 alternative (closer to the Q8_0 reference, ~11% slower decode on an RTX 4090 at 262144 context), same compose file via `STRATA_PROFILE=../../configs/strata-qwen38-flash-next-4090-ud-q4kxl.env`, 80 GiB resident expert budget. Both quants can be installed side by side; only one serves at a time.
+- `strata-qwen38-flash-next-4090-ud-q4kxl.env`: Unsloth UD-Q4_K_XL/524288 alternative (closer to the Q8_0 reference, ~11% slower decode than UD-IQ4_XS, yarn 2 past the trained 262144), same compose file via `STRATA_PROFILE=../../configs/strata-qwen38-flash-next-4090-ud-q4kxl.env`, 80 GiB resident expert budget. Both quants can be installed side by side; only one serves at a time.
 - All three use the same published endpoint, data volume, and empty API key by default; set these non-secret host values in an untracked `.env` instead of the recipes. [Stop before switching](../docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
 
 ## GLM-5.3-Flash / RTX 4090
