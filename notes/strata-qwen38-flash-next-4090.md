@@ -17,7 +17,9 @@ The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/2621
 
 | Date | Profile | Model load | Prefill (t/s) | Decode (t/s) | VRAM / RAM | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| —   | —     | —         | —             | —            | —          | not yet run |
+| 2026-10-20 | UD-IQ4_XS / Strata 0.1.39 | — | 85.8 | 66.2 | 23.9 GiB / 53.7 GiB | Fixed 512-token decode, temperature 0, second run; server timings |
+| 2026-10-20 | UD-IQ4_XS / Strata 0.1.45 | — | 129.5 | 79.5 | 23.9 GiB / 53.7 GiB | Same prompt; +20% decode, +51% prefill |
+| 2026-10-20 | UD-Q4_K_XL / Strata 0.1.45 | — | 124.4 | 70.4 | 23.9 GiB / 80 GiB budget | Same prompt; −11% decode vs UD-IQ4_XS, 71.7 GiB experts in RAM |
 
 ## Reference (other hardware, not VM205)
 
