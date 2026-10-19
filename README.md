@@ -278,7 +278,7 @@ docker compose -f docker/strata/compose.yaml logs -f strata
 
 The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 262144-token native context, vision enabled, GPU 0). Model data and per-model setup state are stored outside Git in `/opt/models` by default. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
 
-The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/262144 recipe at Strata pin `1678de33`; `docker/strata/compose.yaml` retains that pin. The new `configs/strata-qwen38-flash-next-4090-ud-iq4xs.env` and `docker/strata/compose.iq4xs.yaml` select UD-IQ4_XS/262144 with Strata v0.1.39 (`a1641e9f`) in a separate image and a 60 GiB resident expert budget. Both use the same NetBird port 8080 and must be switched exclusively; see [switching instructions](docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
+The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/262144 recipe at Strata pin `1678de33`; `docker/strata/compose.yaml` retains that pin. The new `configs/strata-qwen38-flash-next-4090-ud-iq4xs.env` and `docker/strata/compose.iq4xs.yaml` select UD-IQ4_XS/262144 with Strata v0.1.45 (`477ac13f`) in a separate image and a 60 GiB resident expert budget. Both use the same NetBird port 8080 and must be switched exclusively; see [switching instructions](docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
 
 Run the API smoke test from the host. Set/export `STRATA_API_KEY` in the shell if API authentication is enabled:
 

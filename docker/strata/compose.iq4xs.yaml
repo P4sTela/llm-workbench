@@ -5,11 +5,11 @@ services:
       dockerfile: docker/strata/Dockerfile
       args:
         STRATA_REPO: ${STRATA_REPO:-https://github.com/Niko1221/Strata.git}
-        STRATA_COMMIT: ${STRATA_COMMIT:-a1641e9f77aacad4d201b53c8a7ae8fa21059ebb}
+        STRATA_COMMIT: ${STRATA_COMMIT:-477ac13cbe8e582c20484871ce459d20d82df09d}
         CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
     image: ${STRATA_IMAGE:-strata-qwen38:4090-iq4xs}
     env_file:
-      # Requires the v0.1.39 image; never select it with the IQ3_S image.
+      # Requires the v0.1.45 image; never select it with the IQ3_S image.
       - ${STRATA_PROFILE:-../../configs/strata-qwen38-flash-next-4090-ud-iq4xs.env}
     environment:
       # Container listener; host binding is controlled by the published port.
