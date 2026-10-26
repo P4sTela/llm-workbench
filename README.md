@@ -6,8 +6,8 @@ This is a public collection of Docker configurations, machine-specific settings,
 
 ## Current focus
 
-- GLM-5.3-Flash Maya-M-Derisked on an NVIDIA RTX 4090 as VM205's active runtime
-- Project Maya for GLM; Strata/Qwen recipes retained for rollback, and NInfer/llama.cpp for historical comparisons
+- Strata 0.2.2 serving OrcaRouter Qwen3.8-Flash-Next Q4_K_M at 524288 context on VM205's RTX 4090
+- GLM-5.3-Flash Maya-M-Derisked as the exclusive alternative on the same GPU; pinned Strata 0.1.45 and NInfer/llama.cpp for rollback and historical comparisons
 - Long-context, KV-cache, speculative decoding, reasoning, and tool-use experiments
 - Reproducible configurations that can move to another Linux GPU host
 
@@ -262,7 +262,7 @@ deleting ComfyUI. Check space before adding models or retaining more slots.
 
 `docker/strata/` builds the official Strata engine (MIT) at pinned commits and serves Qwen3.8-Flash-Next on the RTX 4090. These recipes are retained for rollback and must not run alongside Maya. Expert weights live in system RAM, with the active working set on the GPU. The retained IQ3_S recipe uses 262144 context; its RTX 4090 performance remains unmeasured (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).
 
-On VM205 (RTX 4090, NVIDIA driver >= 580, Docker, NVIDIA Container Toolkit), no `.env` is needed: Compose defaults to NetBird-only `100.0.0.159:8080`, host data directory `/opt/models`, and no API key. Do not expose this keyless API outside NetBird or run another inference engine on the same GPU.
+On VM205 (RTX 4090, NVIDIA driver >= 580, Docker, NVIDIA Container Toolkit), no `.env` is needed for the pinned 0.1.45 files: they default to NetBird-only `100.0.0.159:8080`, host data directory `/opt/models`, and no API key. The 0.2.2 files always require `STRATA_API_KEY`. Do not expose this keyless API outside NetBird or run another inference engine on the same GPU.
 
 On another host, override `STRATA_BIND_ADDRESS` (for example `127.0.0.1`), `STRATA_PORT`, and `STRATA_DATA_DIR` through environment variables or an optional untracked `.env` based on `.env.example`. Optional `STRATA_API_KEY` must be set before first setup; never commit secrets.
 
@@ -278,7 +278,7 @@ docker compose -f docker/strata/compose.yaml logs -f strata
 
 The default profile is `configs/strata-qwen38-flash-next-4090.env` (`IQ3_S`, 262144-token native context, vision enabled, GPU 0). Model data and per-model setup state are stored outside Git in `/opt/models` by default. The optional `configs/strata-qwen38-flash-next-4090-iq2xs.env` profile is a smaller-memory alternative, not a second service.
 
-The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/262144 recipe at Strata pin `1678de33`; `docker/strata/compose.yaml` retains that pin. The new `configs/strata-qwen38-flash-next-4090-ud-iq4xs.env` and `docker/strata/compose.iq4xs.yaml` select UD-IQ4_XS/262144 with Strata v0.1.45 (`477ac13f`) in a separate image and a 60 GiB resident expert budget. Both use the same NetBird port 8080 and must be switched exclusively; see [switching instructions](docker/strata/README.md#exclusive-iq3_s--ud-iq4_xs-switching).
+The annotated tag `canonical-strata-iq3s-262k` freezes the pre-change IQ3_S/262144 recipe at Strata pin `1678de33`; `docker/strata/compose.yaml` retains that pin. The new `configs/strata-qwen38-flash-next-4090-ud-iq4xs.env` and `docker/strata/compose.iq4xs.yaml` select UD-IQ4_XS/262144 with Strata v0.1.45 (`477ac13f`) in a separate image and a 60 GiB resident expert budget. Both use the same NetBird port 8080 and must be switched exclusively; see [switching instructions](docker/strata/README.md#exclusive-switching-between-strata-recipes).
 
 Run the API smoke test from the host. Set/export `STRATA_API_KEY` in the shell if API authentication is enabled:
 
@@ -287,6 +287,10 @@ STRATA_BASE_URL=http://100.0.0.159:8080 bash scripts/smoke-strata.sh
 ```
 
 The smoke test checks health, model/status endpoints, a text completion, and an OpenAI-compatible tool call. The IQ3_S API model id is `qwen3.8-flash-next`; for the Unsloth profile also set `STRATA_MODEL_ID=qwen3.8-flash-next-unsloth`. Other NetBird peers connect to `http://100.0.0.159:8080`; no API key is required by default.
+
+Without an API key Strata answers only to IP addresses, `localhost`, and known host names (DNS-rebinding protection). Using a NetBird DNS name such as `comfy-vm.netbird.selfhosted` returns 403 until the name is listed in `STRATA_ALLOWED_HOSTS` (comma-separated, ports ignored) or `"allowed_hosts"` in the model's `strata-<model>.json`. IP URLs avoid the check; changing the list needs a container restart.
+
+`docker/strata/compose.022.yaml` and `docker/strata/compose.orca.yaml` run the official Strata 0.2.2 image (`0.2.2-cuda13`) instead of building the pinned engine, and they are exclusive alternatives to the 0.1.45 files and to Maya on the same GPU. Both require `STRATA_API_KEY`, because 0.2.2 always enforces authentication. The first serves UD-Q4_K_XL at 524288 context from `configs/strata-qwen38-flash-next-4090-ud-q4kxl-022.env`; the second serves the OrcaRouter Q4_K_M pack by running `serve.server` directly against `/data/config/orca-q4_k_m.json`. VM205 currently runs the Orca variant: `/health` returns `"model": "orcarouter-qwen3.8-flash-next-uncensored-q4_k_m"`, `"max_context": 524288`, and `"api_key": true`, with other endpoints answering 401 without the key (checked 2026-10-26). See [Strata 0.2.2 recipes](docker/strata/README.md#strata-022-recipes).
 
 ## Verified historical runtime: NInfer V2 / Qwen3.8-27B / RTX 4090
 

@@ -1,0 +1,32 @@
+services:
+  strata:
+    # The official 0.2.2 image for the engine and the terminal's server, but the
+    # model is a custom GGUF pack that `strata launch` does not know (OrcaRouter
+    # Q4_K_M), so the service runs serve.server directly with a config file.
+    image: ${STRATA_IMAGE:-ghcr.io/niko1221/strata:0.2.2-cuda13}
+    command:
+      - sh
+      - -c
+      - >-
+        cd /opt/strata/terminal &&
+        exec ./python/bin/python3 -m serve.server
+        --engine strata
+        --config /data/config/orca-q4_k_m.json
+        --api-key "$${API_KEY}"
+        --host 0.0.0.0
+        --port 8080
+    environment:
+      # 0.2.2 always serves with a key; the health check reads this too.
+      API_KEY: ${STRATA_API_KEY:?set STRATA_API_KEY in the shell or .env}
+      STRATA_ALLOWED_HOSTS: ${STRATA_ALLOWED_HOSTS:-comfy-vm.netbird.selfhosted}
+      PORT: "8080"
+    gpus: all
+    ulimits:
+      memlock: -1
+    shm_size: 2g
+    stop_grace_period: 2m
+    ports:
+      - "${STRATA_BIND_ADDRESS:-100.0.0.159}:${STRATA_PORT:-8080}:8080"
+    volumes:
+      # /data/config/orca-q4_k_m.json, the pack and the GGUF shards live here.
+      - ${STRATA_DATA_DIR:-/opt/models}:/data

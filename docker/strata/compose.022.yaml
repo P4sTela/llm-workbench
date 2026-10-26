@@ -1,0 +1,24 @@
+services:
+  strata:
+    # Ready-made official image (0.2.1+). The engine is part of the image.
+    image: ${STRATA_IMAGE:-ghcr.io/niko1221/strata:0.2.2-cuda13}
+    env_file:
+      - ../../configs/strata-qwen38-flash-next-4090-ud-q4kxl-022.env
+    environment:
+      # 0.2.2 always serves with a key; it would otherwise generate one.
+      API_KEY: ${STRATA_API_KEY:?set STRATA_API_KEY in the shell or .env}
+      # NetBird hostname access without a 403 (DNS-rebinding protection).
+      STRATA_ALLOWED_HOSTS: ${STRATA_ALLOWED_HOSTS:-comfy-vm.netbird.selfhosted}
+      PORT: "8080"
+    gpus: all
+    ulimits:
+      memlock: -1
+    shm_size: 2g
+    # A big model may need more than Docker's default 10 s to unload.
+    stop_grace_period: 2m
+    ports:
+      - "${STRATA_BIND_ADDRESS:-100.0.0.159}:${STRATA_PORT:-8080}:8080"
+    volumes:
+      # Old layout (/data/models, /data/packs, /data/mtp) is migrated to
+      # /data/Strata-data on the first 0.2.x start (a rename inside the mount).
+      - ${STRATA_DATA_DIR:-/opt/models}:/data

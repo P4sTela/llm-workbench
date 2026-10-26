@@ -18,6 +18,9 @@ services:
       # No API key by default: publish only on VM205's NetBird address.
       # Optional authentication must be configured before first setup.
       API_KEY: ${STRATA_API_KEY:-}
+      # Extra Host names clients may use without an API key (comma-separated,
+      # DNS-rebinding protection). IP addresses always work; restart to apply.
+      STRATA_ALLOWED_HOSTS: ${STRATA_ALLOWED_HOSTS:-}
     gpus: all
     ulimits:
       memlock: -1
