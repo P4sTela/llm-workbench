@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
-# Project Maya v1.1.0, GLM-5.3-Flash Maya-M-Derisked, RTX 4090 (sm_89).
+# Project Maya v1.1.31, GLM-5.3-Flash Maya-M-Derisked, RTX 4090 (sm_89).
 # Compile at image build; keep weights, packs and runtime state on /data.
 FROM nvidia/cuda:13.0.0-devel-ubuntu24.04
 
-ARG MAYA_COMMIT=77697c37be6944e8971e91a4f494332f12a8e31d
+ARG MAYA_COMMIT=c4be54416a4f30a837c2fae91816dc9550d68b61
 ARG CUDA_ARCHITECTURES=89
 ENV DEBIAN_FRONTEND=noninteractive PYTHONUNBUFFERED=1 LANG=C.UTF-8 \
     MAYA_UPDATE_CHECK=0 HOME=/data/home

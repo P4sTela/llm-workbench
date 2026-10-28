@@ -30,8 +30,8 @@ This is a public collection of Docker configurations, machine-specific settings,
 ## Maya / GLM-5.3-Flash Maya-M-Derisked / RTX 4090
 
 `docker/maya/compose.yaml` is a standalone alternative to Strata, not an overlay or
-a second service to run on the same GPU. It builds Project Maya v1.1.0 at
-`77697c37be6944e8971e91a4f494332f12a8e31d` for CUDA architecture 89, using upstream's
+a second service to run on the same GPU. It builds Project Maya v1.1.31 at
+`c4be54416a4f30a837c2fae91816dc9550d68b61` for CUDA architecture 89, using upstream's
 compiler and build-reuse metadata. The default profile
 `configs/maya-glm53-flash-m-derisked-4090-dflash2.env` selects Maya-M-Derisked,
 262144 context, GPU 0, one concurrent request, text only, and DFlash2.

@@ -4,9 +4,9 @@ services:
       context: ../..
       dockerfile: docker/maya/Dockerfile
       args:
-        MAYA_COMMIT: ${MAYA_COMMIT:-77697c37be6944e8971e91a4f494332f12a8e31d}
+        MAYA_COMMIT: ${MAYA_COMMIT:-c4be54416a4f30a837c2fae91816dc9550d68b61}
         CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
-    image: ${MAYA_IMAGE:-maya-glm53:4090-v1.1.0}
+    image: ${MAYA_IMAGE:-maya-glm53:4090-v1.1.31}
     env_file:
       - ${MAYA_PROFILE:-../../configs/maya-glm53-flash-m-derisked-4090-dflash2.env}
     environment:
