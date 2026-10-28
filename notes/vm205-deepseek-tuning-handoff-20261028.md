@@ -4,6 +4,10 @@ Written 2026-10-28. State left behind: DeepSeek is serving, measured, and untune
 session's job is to raise its decode speed without losing quality. Everything below is measured
 fact unless marked [inference] or [verify].
 
+**Executed 2026-10-28: no arm won.** Results and the preset mechanics in
+[`vm205-deepseek-tuning-20261028.md`](vm205-deepseek-tuning-20261028.md); production was left at
+`--dspark auto` with 6 of 6 experts per word.
+
 ## Where things stand
 
 | | |
