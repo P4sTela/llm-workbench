@@ -1,0 +1,40 @@
+services:
+  llama:
+    # Official llama.cpp server image. Pinned by digest so a re-run is identical;
+    # override LLAMA_IMAGE only when a newer build is being evaluated on purpose.
+    image: >-
+      ${LLAMA_IMAGE:-ghcr.io/ggml-org/llama.cpp:server-cuda@sha256:f46a7938f84a62f7c2eba2dfc985d921cb54fb3ec7b4e729cec2cee2cbace609}
+    env_file:
+      - ${LLAMA_PROFILE:-../../configs/llamacpp-qwen38-27b-4090-base.env}
+    environment:
+      LLAMA_HOST: 0.0.0.0
+      LLAMA_PORT: "8080"
+    gpus: all
+    ulimits:
+      memlock: -1
+    shm_size: 2g
+    stop_grace_period: 2m
+    ports:
+      # Defaults to 8081 so this can run beside Maya/Strata on 8080. Only one
+      # engine may hold the RTX 4090's memory at a time; stop the other first.
+      - "${LLAMA_BIND_ADDRESS:-100.0.0.159}:${LLAMA_PORT:-8081}:8080"
+    volumes:
+      # GGUF weights live outside Git, one directory per model.
+      - "${MODEL_DIR:-/opt/models/llama}:/models:ro"
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        exec /app/llama-server \
+          --model "/models/$${MODEL_FILE}" \
+          --alias "$${MODEL_ALIAS}" \
+          --host "$${LLAMA_HOST}" \
+          --port "$${LLAMA_PORT}" \
+          --ctx-size "$${CTX}" \
+          --n-gpu-layers "$${NGL}" \
+          --parallel "$${PARALLEL}" \
+          --cache-type-k "$${KV_K}" \
+          --cache-type-v "$${KV_V}" \
+          --flash-attn "$${FLASH_ATTN}" \
+          --jinja \
+          $${EXTRA_ARGS:-}

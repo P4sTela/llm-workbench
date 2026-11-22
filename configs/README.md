@@ -30,3 +30,10 @@ Profiles should describe tested combinations of model, engine, hardware, context
   pending.
 - The existing `262k` profiles are retained as historical unsupported/
   failed-capacity RTX 4090 experiments and are not the default runtime.
+
+## Qwen3.8-27B derived / agent-oriented / RTX 4090 (llama.cpp)
+
+- `llamacpp-qwen38-27b-4090-base.env`: Unsloth UD-Q4_K_XL, 131072 context, q8_0 KV, `--jinja`; reference arm for the fine-tune comparison. Use `docker/llama/compose.yaml`.
+- `llamacpp-daisyrose-27b-4090.env`: RadixArk DaisyRose-27B Q4_K_XL, same settings. Drop-in swap against the base arm; vendor-reported agent gains are not yet reproduced here.
+- `llamacpp-inkling2mini-4090.env`: Thinking Machines Inkling 2 Mini UD-Q4_K_XL, 32768 context to leave KV room on a 24 GB card. Same model as Strata's SQ-20 pack.
+- All bind `100.0.0.159:8081` by default (`LLAMA_BIND_ADDRESS`, `LLAMA_PORT`) and must not run alongside Maya or Strata on the same GPU. GPU validation pending for all three.

@@ -258,6 +258,46 @@ restart disabled; original
 ComfyUI and Qwen/GLM model data are retained. Capacity was sufficient without
 deleting ComfyUI. Check space before adding models or retaining more slots.
 
+## llama.cpp / agent-oriented Qwen3.8-27B weights / RTX 4090
+
+`docker/llama/compose.yaml` runs the official llama.cpp server image (pinned by
+digest) as the workbench's GGUF slot. The NInfer recipes only accept their own
+`.ninfer` artifact, so the community GGUF fine-tunes need this service instead.
+It binds `100.0.0.159:8081` by default so it does not collide with Maya or Strata
+on 8080, but it still needs the RTX 4090 to itself: stop the other engine first.
+
+Profiles (select with `LLAMA_PROFILE`):
+
+- `configs/llamacpp-qwen38-27b-4090-base.env` — Unsloth UD-Q4_K_XL, the reference arm.
+- `configs/llamacpp-daisyrose-27b-4090.env` — RadixArk DaisyRose-27B Q4_K_XL, an
+  RL-only agent fine-tune of the same base model with the same template, so the
+  two arms differ only in weights.
+- `configs/llamacpp-inkling2mini-4090.env` — Thinking Machines Inkling 2 Mini
+  (26.4B looped MoE). Same model as Strata's SQ-20 pack, reached through GGUF
+  instead of a Strata 0.2.19 source build.
+
+Weights are fetched with the existing manifest downloader, one model at a time
+(the three packs together are about 54 GB):
+
+```bash
+export MODEL_DIR=/opt/models/llama
+python3 scripts/download-model.py models/manifests/qwen3.8-27b-gguf-ud-q4kxl.json
+python3 scripts/download-model.py models/manifests/daisyrose-27b-gguf-q4kxl.json
+python3 scripts/download-model.py models/manifests/inkling-2-mini-gguf-ud-q4kxl.json
+```
+
+Start one arm and check the API, including an OpenAI-compatible tool call:
+
+```bash
+docker compose -f docker/llama/compose.yaml up -d llama
+LLAMA_BASE_URL=http://100.0.0.159:8081 bash scripts/smoke-llama.sh
+```
+
+Switch models by pointing `LLAMA_PROFILE` at another profile and recreating the
+container; `LLAMA_MODEL_ID` in the smoke script must match that profile's alias.
+GPU validation is pending for all three profiles: the measurements above the
+fold are the vendors' own cards, not runs from this workbench.
+
 ## Retained runtime: Strata / Qwen3.8-Flash-Next / RTX 4090
 
 `docker/strata/` builds the official Strata engine (MIT) at pinned commits and serves Qwen3.8-Flash-Next on the RTX 4090. These recipes are retained for rollback and must not run alongside Maya. Expert weights live in system RAM, with the active working set on the GPU. The retained IQ3_S recipe uses 262144 context; its RTX 4090 performance remains unmeasured (see [`notes/strata-qwen38-flash-next-4090.md`](notes/strata-qwen38-flash-next-4090.md)).

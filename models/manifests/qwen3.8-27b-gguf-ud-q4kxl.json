@@ -1,0 +1,18 @@
+{
+  "name": "Qwen3.8-27B Unsloth UD-Q4_K_XL (llama.cpp reference arm)",
+  "format": "gguf",
+  "repo": "unsloth/Qwen3.8-27B-GGUF",
+  "revision": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+  "files": [
+    {
+      "file": "Qwen3.8-27B/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+      "bytes": 17659407264,
+      "sha256": "2a5f3565f39cf885103da591182c1266da64745737b42b452fd3e675369f1211"
+    },
+    {
+      "file": "Qwen3.8-27B/mmproj-BF16.gguf",
+      "bytes": 931146432,
+      "sha256": "83ee4f4f205fa514161778c41df1ea14144faa0f713510893b63c2395f5c2d53"
+    }
+  ]
+}
