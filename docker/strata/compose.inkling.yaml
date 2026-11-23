@@ -1,0 +1,19 @@
+# Strata 0.2.19 serving Inkling 2 Mini (strata-inkling shape engine).
+# Exclusive with the other GPU services: stop them first.
+services:
+  strata:
+    image: ${STRATA_IMAGE:-ghcr.io/niko1221/strata:0.2.19-cuda13}
+    env_file:
+      - ${STRATA_PROFILE:-../../configs/strata-inkling2mini-sq20-4090.env}
+    environment:
+      API_KEY: ${STRATA_API_KEY:?set STRATA_API_KEY in the shell or .env}
+      PORT: "8080"
+    gpus: all
+    ulimits:
+      memlock: -1
+    shm_size: 2g
+    stop_grace_period: 2m
+    ports:
+      - "${STRATA_BIND_ADDRESS:-100.0.0.83}:${STRATA_PORT:-8081}:8080"
+    volumes:
+      - ${STRATA_DATA_DIR:-/opt/models}:/data
