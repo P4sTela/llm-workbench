@@ -7,23 +7,28 @@ Method: `scripts/bench-llama.py` — a 2.4K-token prompt for prefill, three
 256-token generations for decode (thinking off), and one OpenAI tool call.
 Numbers are the server's own `timings`.
 
-| Model | Quant | ctx | prefill t/s | decode t/s | tool call | VRAM |
-|---|---|---|---|---|---|---|
-| Qwen3.8-27B (base) | UD-Q4_K_XL | 131072 | 3123 | 47.7 | pass | — |
-| DaisyRose-27B | Q4_K_XL | 131072 | 2899 | 47.6 | pass | — |
-| Inkling 2 Mini | IQ4_NL | 32768 | 1938 | **71.7** | pass | 20.9 GB |
+| Model | Quant | spec | ctx | prefill t/s | decode t/s | tool call | VRAM |
+|---|---|---|---|---|---|---|---|
+| Qwen3.8-27B (base) | UD-Q4_K_XL | none | 131072 | 3123 | 47.7 | pass | — |
+| Qwen3.8-27B (base) | UD-Q4_K_XL | **draft-mtp** | 131072 | 2486 | **80.7** | pass | — |
+| DaisyRose-27B | Q4_K_XL | **draft-mtp** | 131072 | — | **81.9** | pass | — |
+| Inkling 2 Mini | IQ4_NL | none | 32768 | 1938 | **71.5** | pass | 20.9 GB |
+
+Decode figures above come from 400-512 token generations; 256-token runs read
+6-15 t/s lower because spec-decode needs a few dozen tokens to reach its
+acceptance rate. Measure long.
 
 Reference (old VM, Ubuntu 26.04, driver 595.84, **PCIe Gen1**): NInfer Qwen3.8-27B
-44.2 t/s without MTP / 81.8 with MTP; Strata Qiwen3.8-Flash-Next 67.4 t/s.
+44.2 t/s without MTP / 81.8 with MTP; Strata Qwen3.8-Flash-Next 67.4 t/s.
 
 ## Notes
 
 - The 27B pair is speed-identical, as expected for the same architecture and
   size: the DaisyRose gain is in task behaviour, not throughput. Comparing them
   needs an agent harness, not this bench.
-- MTP is not active: the base GGUF carries `blk.64.nextn.*` and llama.cpp build
-  12627 reports them as unused tensors, so decode is the MTP-off number. NInfer
-  reached 81.8 t/s with MTP on; that is the route to recover it.
+- MTP works in plain llama.cpp: `--spec-type draft-mtp`. Without the flag the
+  loader reports `blk.64.nextn.*` as unused tensors and runs at the MTP-off
+  number, which is a misleading 47.7 t/s for this model.
 - Inkling 2 Mini runs 1.5x faster than the 27B dense at Qwen3.8-27B-class
   quality (AA v5 20.1), but it is verbose: generations hit the 256-token cap, so
   wall-clock per answer is worse than the t/s suggests.
@@ -32,3 +37,6 @@ Reference (old VM, Ubuntu 26.04, driver 595.84, **PCIe Gen1**): NInfer Qwen3.8-2
   the loop as 48 layers (unmerged PR layout). The ggml-org conversion loads.
 - Do not offload Inkling's looped experts to CPU on CUDA: upstream issue #32710
   returns NaN and a repeating token.
+- Inkling's DSpark drafter (`dspark-Inkling-2-Mini-Q8_0.gguf`, Unsloth) does not
+  pair with the ggml-org IQ4_NL: `markov_w1.weight` expects vocab 200058 and the
+  file has 201024. Same layout split as the main Unsloth pack.
