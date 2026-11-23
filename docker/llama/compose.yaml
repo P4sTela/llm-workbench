@@ -21,9 +21,12 @@ services:
     volumes:
       # GGUF weights live outside Git, one directory per model.
       - "${MODEL_DIR:-/opt/models/llama}:/models:ro"
-    command:
+    # The image's ENTRYPOINT is llama-server itself, so the shell has to be
+    # installed as the entrypoint; otherwise the script arrives as arguments.
+    entrypoint:
       - /bin/sh
       - -ec
+    command:
       - |
         exec /app/llama-server \
           --model "/models/$${MODEL_FILE}" \

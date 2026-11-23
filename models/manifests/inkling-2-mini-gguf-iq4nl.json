@@ -1,0 +1,13 @@
+{
+  "name": "Inkling 2 Mini IQ4_NL (llama.cpp-tooling conversion, inkling2_loop)",
+  "format": "gguf",
+  "repo": "ggml-org/Inkling-2-Mini-GGUF",
+  "revision": "e8a2cecf0e78914f07cc27b9be711a9b2c7561d9",
+  "files": [
+    {
+      "file": "Inkling-2-Mini-IQ4_NL.gguf",
+      "bytes": 17627940768,
+      "sha256": "cbdf3fa9dc50a4124977980f37da4f1fa764b0cfe800d275cd43d26ce2a81af4"
+    }
+  ]
+}
