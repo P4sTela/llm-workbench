@@ -1,0 +1,22 @@
+# Xolotl `xolotl-inkling` engine. Exclusive with the other GPU services.
+services:
+  xolotl:
+    build:
+      context: .
+      args:
+        XOLOTL_COMMIT: ${XOLOTL_COMMIT:-3435d55}
+        CUDA_ARCH: ${CUDA_ARCH:-89}
+    image: llm-workbench/xolotl:${XOLOTL_COMMIT:-3435d55}
+    command: ["--config", "/config/xolotl.json", "--host", "0.0.0.0", "--port", "8134"]
+    environment:
+      STRATA_API_KEY: ${STRATA_API_KEY:?set STRATA_API_KEY in .env}
+    gpus: all
+    ulimits:
+      memlock: -1
+    shm_size: 2g
+    stop_grace_period: 2m
+    ports:
+      - "${XOLOTL_BIND_ADDRESS:-100.0.0.83}:${XOLOTL_PORT:-8081}:8134"
+    volumes:
+      - ${MODEL_DIR:-/opt/models}:/models:ro
+      - ${XOLOTL_CONFIG:-../../configs/xolotl-inkling2mini-abliterated-4090.json}:/config/xolotl.json:ro
