@@ -39,3 +39,13 @@ decode step: `CUDA error: out of memory` in `cudaGraphInstantiate`. The author's
 With `GGML_CUDA_DISABLE_GRAPHS=1` (docker/xolotl/xolotl.env) the same prompt passes: prefill 1,496 t/s,
 the needle found (PERSIMMON-42), decode 65 t/s at 480K, 325 s wall. The cost is short-context decode:
 code 212 -> 159 t/s, prose 117 -> 104 t/s.
+
+## 384K with CUDA graphs on (the serving default)
+
+`configs/xolotl-inkling2mini-abliterated-4090-384k.json`, empty `xolotl.env`: 21.7 GB of VRAM at load.
+Decode (temperature 0.7, two runs): prose 113-119, code 207-218, Japanese 99-102, file rewrite 213-224 t/s,
+i.e. the full speed. A 369,640-token needle prompt: prefill 2,977 t/s, needle found, decode 62 t/s at
+370K, 126 s wall, engine still up afterwards.
+
+Pick: 384K + graphs for speed (agent work, benchmarks); the 512K config + GGML_CUDA_DISABLE_GRAPHS=1
+only when a prompt needs more than 384K.

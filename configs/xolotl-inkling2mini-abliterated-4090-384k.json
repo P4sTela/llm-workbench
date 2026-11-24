@@ -1,0 +1,27 @@
+{
+  "_comment": [
+    "Xolotl xolotl-inkling serving orcarouter Inkling-2-Mini-abliterated Mix-16G (text only) on an RTX 4090.",
+    "Used by docker/xolotl/compose.yaml; paths are inside the container (/models = /opt/models on loom).",
+    "384K context (CUDA graphs on) with the global-layer K/V at k8v4 (q8_0 K, Hadamard-rotated q4_0 V; the sliding rings stay f16).",
+    "DSpark drafter = unsloth dspark/dspark-Inkling-2-Mini-BF16.gguf (the pre-mainline format Xolotl reads).",
+    "Xolotl drafts only on greedy requests; sampled requests decode normally.",
+    "Tokenizer pack exported by tools/inkling/export_tokenizer.py from thinkingmachines/Inkling-2-Mini."
+  ],
+  "arch": "inkling2_loop",
+  "exe": "build-eng/xolotl-inkling",
+  "cwd": ".",
+  "args": [
+    "--native", "/models/inkling-2-mini-abliterated/Inkling-2-Mini-abliterated-Mix-16G.gguf",
+    "--context", "393216",
+    "--kv-type", "k8v4",
+    "--dspark", "/models/inkling-2-mini/dspark-Inkling-2-Mini-BF16-unsloth-old.gguf"
+  ],
+  "tokenizer": "/models/inkling-2-mini/pack/tokenizer",
+  "image_pad": "<|unused_200054|>",
+  "vision_start": "<|content_image|>",
+  "model_name": "inkling-2-mini-abliterated",
+  "log": "/tmp/xol-inkling.log",
+  "port": 8134,
+  "gpu": 0,
+  "sampling": {"temperature": 1.0, "top_p": 1.0, "top_k": 64}
+}
