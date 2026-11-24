@@ -29,3 +29,13 @@ report draft_n = 0.
 llama.cpp cannot use the DSpark drafter here: Unsloth's file fails `markov_w1` (201024 vs 200058),
 and the "mainline" file fails `joint_proj` (5120 vs 2816) on b12648. 384K+ does not fit in llama.cpp
 (compute buffer 4.8 GB at -ub 64).
+
+## 512K at the edge
+
+A 480,040-token needle prompt prefilled in 320 s (~1,500 t/s), then the engine aborted on the first
+decode step: `CUDA error: out of memory` in `cudaGraphInstantiate`. The author's 512K run used a
+13.93 GB file; this one is 14.28 GiB of weights, so the margin is smaller.
+
+With `GGML_CUDA_DISABLE_GRAPHS=1` (docker/xolotl/xolotl.env) the same prompt passes: prefill 1,496 t/s,
+the needle found (PERSIMMON-42), decode 65 t/s at 480K, 325 s wall. The cost is short-context decode:
+code 212 -> 159 t/s, prose 117 -> 104 t/s.

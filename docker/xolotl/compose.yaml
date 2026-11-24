@@ -8,6 +8,10 @@ services:
         CUDA_ARCH: ${CUDA_ARCH:-89}
     image: llm-workbench/xolotl:${XOLOTL_COMMIT:-3435d55}
     command: ["--config", "/config/xolotl.json", "--host", "0.0.0.0", "--port", "8134"]
+    # Optional extra engine environment (e.g. GGML_CUDA_DISABLE_GRAPHS=1, XOLOTL_DSPARK_* knobs).
+    env_file:
+      - path: ${XOLOTL_ENV_FILE:-./xolotl.env}
+        required: false
     environment:
       STRATA_API_KEY: ${STRATA_API_KEY:?set STRATA_API_KEY in .env}
     gpus: all
