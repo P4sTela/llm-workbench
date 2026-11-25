@@ -16,7 +16,7 @@ ENV PATH=/opt/xolotl/.venv/bin:$PATH
 RUN bash tools/xolotl/fetch-llama.sh
 RUN cmake -S . -B build-xolotl -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTRATA_ENABLE_CUDA=ON -DSTRATA_GGML_CUDA=ON \
         -DSTRATA_MMQ_KQUANTS=ON -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH} -DSTRATA_GGML_DIR=/opt/xolotl/third_party/llama.cpp \
-    && ninja -C build-xolotl xolotl-inkling xolotl-inkling-dspark
+    && ninja -C build-xolotl strata xolotl-inkling xolotl-inkling-dspark
 # configs/*.json point "exe" at build-eng/; keep both names.
 RUN ln -s build-xolotl build-eng
 EXPOSE 8134

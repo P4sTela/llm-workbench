@@ -1,0 +1,51 @@
+{
+ "_comment": [
+  "Qwen3.8-Flash-Next on Xolotl's `strata` engine (image llm-workbench/xolotl:3435d55-qfn) on an RTX 4090 + 220 GiB RAM.",
+  "256K context, int8 KV (32K resident), MTP spec 4 with the draft layer built by tools/mtp_fetch.py + mtp_pack.py + mtp_rt.py",
+  "from Qwen/Qwen3.8-Flash-Next into /opt/models/qwen3.8-flash-next-mtp/rt.",
+  "Model: IndrasMirror Qwen3.8-Flash-Next-Swift-1.5-XQ-Uncensored (XQ 45 GB + PLE, its shipped pack-qfn45). Exact routing (no STRATA_ROUTE_RESIDENT)."
+ ],
+ "exe": "build-xolotl/strata",
+ "cwd": "/opt/xolotl",
+ "args": [
+  "--pack",
+  "/models/qwen3.8-flash-next-xq45/pack-qfn45",
+  "--native",
+  "/models/qwen3.8-flash-next-xq45/Qwen3.8-Flash-Next-Swift-1.5-XQ-45GB-Uncensored-00001-of-00002.gguf",
+  "--ple-gguf",
+  "/models/qwen3.8-flash-next-xq45/Qwen3.8-Flash-Next-Swift-1.5-XQ-45GB-Uncensored-00001-of-00002.gguf",
+  "--ple-io",
+  "direct",
+  "--expert-profile",
+  "/opt/xolotl/data/expert-profile.bin",
+  "--expert-cache",
+  "auto",
+  "--prefill",
+  "auto",
+  "--spec",
+  "4",
+  "--spec-min-p",
+  "0.5",
+  "--mtp",
+  "/models/qwen3.8-flash-next-mtp/rt",
+  "--max-context",
+  "262144",
+  "--kv",
+  "int8",
+  "--kv-resident",
+  "32768"
+ ],
+ "env": {},
+ "tokenizer": "/models/qwen3.8-flash-next-xq45/pack-qfn45/tokenizer",
+ "model_name": "qwen3.8-flash-next-xq45",
+ "log": "/tmp/qwen3.8-flash-next-xq45.log",
+ "port": 8134,
+ "gpu": 0,
+ "sampling": {
+  "temperature": 1.0,
+  "top_p": 0.95,
+  "top_k": 20
+ },
+ "fit_max_tokens": true,
+ "reasoning_budget_tokens": 32768
+}

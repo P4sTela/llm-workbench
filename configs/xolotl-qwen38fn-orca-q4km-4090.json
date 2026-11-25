@@ -1,0 +1,51 @@
+{
+ "_comment": [
+  "Qwen3.8-Flash-Next on Xolotl's `strata` engine (image llm-workbench/xolotl:3435d55-qfn) on an RTX 4090 + 220 GiB RAM.",
+  "256K context, int8 KV (32K resident), MTP spec 4 with the draft layer built by tools/mtp_fetch.py + mtp_pack.py + mtp_rt.py",
+  "from Qwen/Qwen3.8-Flash-Next into /opt/models/qwen3.8-flash-next-mtp/rt.",
+  "Model: orcarouter Qwen3.8-Flash-Next-Uncensored-GGUF Q4_K_M (119.2 GB), pack built by tools/iq_pack.py --compat-bf16. Exact routing (no STRATA_ROUTE_RESIDENT)."
+ ],
+ "exe": "build-xolotl/strata",
+ "cwd": "/opt/xolotl",
+ "args": [
+  "--pack",
+  "/models/qwen3.8-flash-next-orca/pack-q4km",
+  "--native",
+  "/models/qwen3.8-flash-next-orca/Qwen3.8-Flash-Next-Uncensored-Q4_K_M-00001-of-00003.gguf",
+  "--ple-gguf",
+  "/models/qwen3.8-flash-next-orca/Qwen3.8-Flash-Next-Uncensored-Q4_K_M-00001-of-00003.gguf",
+  "--ple-io",
+  "direct",
+  "--expert-profile",
+  "/opt/xolotl/data/expert-profile.bin",
+  "--expert-cache",
+  "auto",
+  "--prefill",
+  "auto",
+  "--spec",
+  "4",
+  "--spec-min-p",
+  "0.5",
+  "--mtp",
+  "/models/qwen3.8-flash-next-mtp/rt",
+  "--max-context",
+  "262144",
+  "--kv",
+  "int8",
+  "--kv-resident",
+  "32768"
+ ],
+ "env": {},
+ "tokenizer": "/models/qwen3.8-flash-next-orca/pack-q4km/tokenizer",
+ "model_name": "qwen3.8-flash-next-orca-q4km",
+ "log": "/tmp/qwen3.8-flash-next-orca-q4km.log",
+ "port": 8134,
+ "gpu": 0,
+ "sampling": {
+  "temperature": 1.0,
+  "top_p": 0.95,
+  "top_k": 20
+ },
+ "fit_max_tokens": true,
+ "reasoning_budget_tokens": 32768
+}
